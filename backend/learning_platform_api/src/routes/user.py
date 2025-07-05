@@ -1,0 +1,57 @@
+from flask import Blueprint, jsonify, request
+from werkzeug.security import generate_password_hash, check_password_hash
+from src.models.user import User, db
+
+user_bp = Blueprint('user', __name__)
+
+@user_bp.route('/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])
+
+@user_bp.route('/users', methods=['POST'])
+def create_user():
+    data = request.json
+    hashed_password = generate_password_hash(data['password'])
+    user = User(
+        email=data['email'], 
+        hashed_password=hashed_password,
+        role=data.get('role', 'student')
+    )
+    db.session.add(user)
+    db.session.commit()
+    return jsonify(user.to_dict()), 201
+
+@user_bp.route('/users/me', methods=['GET'])
+def get_current_user():
+    # This would normally require authentication middleware
+    # For now, return a mock response
+    return jsonify({
+        'id': '123e4567-e89b-12d3-a456-426614174000',
+        'email': 'user@example.com',
+        'role': 'student',
+        'created_at': '2024-01-01T00:00:00'
+    })
+
+@user_bp.route('/users/<string:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return jsonify(user.to_dict())
+
+@user_bp.route('/users/<string:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user = User.query.get_or_404(user_id)
+    data = request.json
+    user.email = data.get('email', user.email)
+    user.role = data.get('role', user.role)
+    if 'password' in data:
+        user.hashed_password = generate_password_hash(data['password'])
+    db.session.commit()
+    return jsonify(user.to_dict())
+
+@user_bp.route('/users/<string:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return '', 204
