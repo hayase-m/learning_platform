@@ -1,0 +1,272 @@
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge } from 'lucide-react'
+
+export default function SettingsPage({ user, onBack }) {
+  const [settings, setSettings] = useState({
+    ai_personality: '厳しい',
+    notification_audio: true,
+    notification_desktop: false,
+    focus_threshold: 70
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchUserSettings()
+  }, [])
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}`)
+      if (response.ok) {
+        const userData = await response.json()
+        setSettings({
+          ai_personality: userData.ai_personality,
+          notification_audio: userData.notification_audio,
+          notification_desktop: userData.notification_desktop,
+          focus_threshold: userData.focus_threshold
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveSettings = async () => {
+    setSaving(true)
+    try {
+      const response = await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      })
+      
+      if (response.ok) {
+        // Settings saved successfully
+        console.log('Settings saved')
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePersonalityChange = (value) => {
+    setSettings(prev => ({ ...prev, ai_personality: value }))
+  }
+
+  const handleNotificationChange = (type, value) => {
+    setSettings(prev => ({ ...prev, [type]: value }))
+  }
+
+  const handleThresholdChange = (value) => {
+    setSettings(prev => ({ ...prev, focus_threshold: value[0] }))
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-white">設定を読み込み中...</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="text-white border-white/20 hover:bg-white/10"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          ダッシュボードに戻る
+        </Button>
+        <h1 className="text-2xl font-bold text-white">
+          設定
+        </h1>
+      </div>
+
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* AI Personality Settings */}
+        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              AIライバルの性格設定
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Label className="text-white">
+              AIライバルの口調を選択してください
+            </Label>
+            <RadioGroup
+              value={settings.ai_personality}
+              onValueChange={handlePersonalityChange}
+              className="space-y-3"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="厳しい" id="strict" />
+                <Label htmlFor="strict" className="text-white">
+                  厳しい - 「集中しろ！」「甘い！」など、厳格で挑戦的な口調
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="論理的" id="logical" />
+                <Label htmlFor="logical" className="text-white">
+                  論理的 - データに基づいた客観的で分析的な口調
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="穏やか" id="gentle" />
+                <Label htmlFor="gentle" className="text-white">
+                  穏やか - 優しく励ましてくれる支援的な口調
+                </Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              通知設定
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-white flex items-center gap-2">
+                  <Volume2 className="w-4 h-4" />
+                  音声通知
+                </Label>
+                <p className="text-sm text-slate-400">
+                  AIからのメッセージを音声で通知します
+                </p>
+              </div>
+              <Switch
+                checked={settings.notification_audio}
+                onCheckedChange={(value) => handleNotificationChange('notification_audio', value)}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-white flex items-center gap-2">
+                  <Bell className="w-4 h-4" />
+                  デスクトップ通知
+                </Label>
+                <p className="text-sm text-slate-400">
+                  ブラウザのデスクトップ通知を使用します
+                </p>
+              </div>
+              <Switch
+                checked={settings.notification_desktop}
+                onCheckedChange={(value) => handleNotificationChange('notification_desktop', value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Focus Threshold Settings */}
+        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Gauge className="w-5 h-5" />
+              集中度判定の閾値調整
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-white">
+                集中度の判定感度: {settings.focus_threshold}
+              </Label>
+              <p className="text-sm text-slate-400">
+                この値以下になると「集中力低下」として判定されます
+              </p>
+            </div>
+            
+            <div className="px-2">
+              <Slider
+                value={[settings.focus_threshold]}
+                onValueChange={handleThresholdChange}
+                max={100}
+                min={30}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
+                <span>30 (敏感)</span>
+                <span>65 (標準)</span>
+                <span>100 (鈍感)</span>
+              </div>
+            </div>
+            
+            <div className="bg-slate-800/50 p-3 rounded-lg">
+              <p className="text-sm text-slate-300">
+                <strong>推奨設定:</strong> 初回利用時は70前後に設定し、
+                使用しながら自分の環境に合わせて調整してください。
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Privacy Information */}
+        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              プライバシー情報
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="bg-green-500/20 border border-green-500/50 p-3 rounded-lg">
+              <p className="text-green-300 text-sm">
+                ✓ Webカメラの映像はサーバーに送信されません
+              </p>
+            </div>
+            <div className="bg-green-500/20 border border-green-500/50 p-3 rounded-lg">
+              <p className="text-green-300 text-sm">
+                ✓ すべての映像解析はブラウザ内で完結します
+              </p>
+            </div>
+            <div className="bg-green-500/20 border border-green-500/50 p-3 rounded-lg">
+              <p className="text-green-300 text-sm">
+                ✓ 学習データのみがサーバーに保存されます
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={saveSettings}
+            disabled={saving}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+          >
+            {saving ? '保存中...' : '設定を保存'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
