@@ -1,0 +1,9 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 仮想環境
+venv/
+.env/
+.envrc
