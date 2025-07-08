@@ -7,3 +7,6 @@ __pycache__/
 venv/
 .env/
 .envrc
+
+# 秘密鍵
+ai-study-buddy-rival-firebase-adminsdk-fbsvc-31b2ce778c.json

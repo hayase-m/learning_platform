@@ -4,6 +4,30 @@ import uuid
 import json
 import random
 
+from functools import wraps
+from firebase_admin import auth
+from flask import request, g
+
+def token_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(' ')[1]
+
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+
+        try:
+            decoded_token = auth.verify_id_token(token)
+            g.user = decoded_token # gオブジェクトにユーザー情報を格納
+        except Exception as e:
+            return jsonify({'error': 'Token is invalid', 'details': str(e)}), 401
+
+        return f(*args, **kwargs)
+    return decorated_function
+    
+
 user_bp = Blueprint('user', __name__)
 
 # User endpoints
@@ -13,25 +37,31 @@ def get_users():
     return jsonify([user.to_dict() for user in users])
 
 @user_bp.route('/users', methods=['POST'])
+@token_required  # ★トークン検証デコレータを追加
 def create_user():
-    data = request.json
+    # ★デコレータが検証したトークンからFirebaseのUIDを取得
+    user_id = g.user['uid']
     
-    # Check if user already exists
-    existing_user = User.query.filter_by(user_id=data['user_id']).first()
+    # ユーザーがDBに既に存在するか確認
+    existing_user = User.query.filter_by(user_id=user_id).first()
     if existing_user:
-        return jsonify({'error': 'User already exists'}), 400
+        # 既に存在する場合は、その情報を返却する（エラーではない）
+        return jsonify(existing_user.to_dict()), 200
     
-    user = User(
-        user_id=data['user_id'],
-        email=data['email'],
-        ai_personality=data.get('ai_personality', '厳しい'),
-        notification_audio=data.get('notification_audio', True),
-        notification_desktop=data.get('notification_desktop', False),
-        focus_threshold=data.get('focus_threshold', 70)
+    # フロントから送られてきたemailを取得
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    # 新しいユーザーをDBに作成
+    new_user = User(
+        user_id=user_id, # ★トークンから取得したIDを使用
+        email=email
     )
-    db.session.add(user)
+    db.session.add(new_user)
     db.session.commit()
-    return jsonify(user.to_dict()), 201
+    return jsonify(new_user.to_dict()), 201
 
 @user_bp.route('/users/<string:user_id>', methods=['GET'])
 def get_user(user_id):
