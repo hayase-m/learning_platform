@@ -8,6 +8,9 @@ from flask_cors import CORS
 from src.models.user import db
 from src.routes.user import user_bp
 
+import firebase_admin
+from firebase_admin import credentials
+
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
