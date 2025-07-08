@@ -149,7 +149,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={() => onNavigate('reports')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-black-500 border-white/20 hover:bg-white/10"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             レポート
@@ -158,7 +158,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={() => onNavigate('settings')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-black-500 border-white/20 hover:bg-white/10"
           >
             <Settings className="w-4 h-4 mr-2" />
             設定
@@ -167,7 +167,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-red-500 border-red-500/20 hover:bg-white/10"
           >
             ログアウト
           </Button>
