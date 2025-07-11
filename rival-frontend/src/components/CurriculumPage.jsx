@@ -353,7 +353,7 @@ export default function CurriculumPage({ user, onBack }) {
                 </CardHeader>
                 <CardContent>
                   <Accordion type="single" collapsible className="w-full">
-                    {selectedCurriculum.curriculum_data.daily_plans?.map((plan) => {
+                    {selectedCurriculum.curriculum_data.daily_plan?.map((plan) => {
                       const progress = selectedCurriculum.progress?.find(p => p.day === plan.day)
                       const isCompleted = progress?.completed || false
                       

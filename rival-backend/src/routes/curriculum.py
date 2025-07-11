@@ -25,9 +25,26 @@ def generate_curriculum_from_gemini(goal, duration_days):
       "daily_plan": [
         {{
           "day": (日数),
-          "theme": "(その日の学習テーマ)",
-          "details": "(具体的な学習内容)",
-          "estimated_time_minutes": (推定学習時間（分）)
+          "title": "(その日の学習テーマ)",
+          "objectives": ["(箇条書きの学習目標1)", "(箇条書きの学習目標2)"],
+          "topics": ["(学習トピック1)", "(学習トピック2)"],
+          "activities": [
+            {{
+              "title": "(具体的な活動タイトル)",
+              "description": "(活動内容の詳細)",
+              "duration_minutes": (活動時間（分）)
+            }}
+          ],
+          "resources": ["(参考リソースのURLや書籍名など)"],
+          "assessment": "(その日の理解度を確認する方法)",
+          "homework": "(宿題や課題)"
+        }}
+      ],
+      "milestones": [
+        {{
+          "day": (マイルストーン達成日),
+          "title": "(マイルストーンのタイトル)",
+          "description": "(マイルストーン達成の具体的な内容)"
         }}
       ]
     }}
