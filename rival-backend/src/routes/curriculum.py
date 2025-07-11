@@ -1,16 +1,54 @@
 from flask import Blueprint, jsonify, request
 from src.models.curriculum import Curriculum, CurriculumProgress, db
-from src.services.gemini_service import GeminiService
+import google.generativeai as genai
 import uuid
 import json
+import os
 from datetime import datetime
 
 curriculum_bp = Blueprint('curriculum', __name__)
 
 # Gemini API key (本来は環境変数から取得すべき)
-GEMINI_API_KEY = "AIzaSyCzrboYCnZt-YzZR4xwc3wKj8Gn1AoS1zc"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
-# Curriculum endpoints
+def generate_curriculum_from_gemini(goal, duration_days):
+    prompt = f"""あなたはプロの家庭教師です。以下の目標と期間に基づいて、詳細な学習カリキュラムをJSON形式で生成してください。
+
+    **目標:** {goal}
+    **期間:** {duration_days}日
+
+    **JSON形式の仕様:**
+    {{
+      "curriculum_title": "(カリキュラムのタイトル)",
+      "overview": "(カリキュラム全体の概要)",
+      "daily_plan": [
+        {{
+          "day": (日数),
+          "theme": "(その日の学習テーマ)",
+          "details": "(具体的な学習内容)",
+          "estimated_time_minutes": (推定学習時間（分）)
+        }}
+      ]
+    }}
+    """
+
+    model = genai.GenerativeModel('gemini-2.0-flash')
+    response = model.generate_content(prompt)
+    
+    try:
+        response_text = response.text
+        json_start = response_text.find('{')
+        json_end = response_text.rfind('}') + 1
+        
+        if json_start == -1 or json_end == 0:
+            raise ValueError("No JSON object found in the response.")
+            
+        json_string = response_text[json_start:json_end]
+        return json.loads(json_string)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise Exception(f"Failed to parse curriculum from Gemini response: {e}, response: {response.text}")
+
 @curriculum_bp.route('/curriculums', methods=['GET'])
 def get_curriculums():
     """全てのカリキュラムを取得"""
@@ -34,7 +72,6 @@ def create_curriculum(user_id):
     """新しいカリキュラムを生成・作成"""
     data = request.json
     
-    # 必須フィールドの検証
     if 'goal' not in data:
         return jsonify({'error': 'Goal is required'}), 400
     
@@ -42,11 +79,8 @@ def create_curriculum(user_id):
     duration_days = data.get('duration_days', 30)
     
     try:
-        # Gemini APIを使用してカリキュラムを生成
-        gemini_service = GeminiService(GEMINI_API_KEY)
-        curriculum_data = gemini_service.generate_curriculum(goal, duration_days)
+        curriculum_data = generate_curriculum_from_gemini(goal, duration_days)
         
-        # データベースに保存
         curriculum = Curriculum(
             curriculum_id=str(uuid.uuid4()),
             user_id=user_id,
@@ -61,7 +95,6 @@ def create_curriculum(user_id):
         db.session.add(curriculum)
         db.session.commit()
         
-        # 各日の進捗レコードを初期化
         for day in range(1, duration_days + 1):
             progress = CurriculumProgress(
                 progress_id=str(uuid.uuid4()),
@@ -101,14 +134,12 @@ def delete_curriculum(curriculum_id):
     """カリキュラムを削除"""
     curriculum = Curriculum.query.filter_by(curriculum_id=curriculum_id).first_or_404()
     
-    # 関連する進捗レコードも削除
     CurriculumProgress.query.filter_by(curriculum_id=curriculum_id).delete()
     
     db.session.delete(curriculum)
     db.session.commit()
     return '', 204
 
-# Progress endpoints
 @curriculum_bp.route('/curriculums/<string:curriculum_id>/progress', methods=['GET'])
 def get_curriculum_progress(curriculum_id):
     """カリキュラムの進捗を取得"""
@@ -148,33 +179,26 @@ def get_user_curriculum_progress(user_id, curriculum_id):
     ).order_by(CurriculumProgress.day).all()
     return jsonify([progress.to_dict() for progress in progress_list])
 
-# AI-powered curriculum regeneration
 @curriculum_bp.route('/curriculums/<string:curriculum_id>/regenerate', methods=['POST'])
 def regenerate_curriculum(curriculum_id):
     """既存のカリキュラムを再生成"""
     curriculum = Curriculum.query.filter_by(curriculum_id=curriculum_id).first_or_404()
     data = request.json
     
-    # 新しい目標が指定されていれば使用、そうでなければ既存の目標を使用
     goal = data.get('goal', curriculum.goal)
     duration_days = data.get('duration_days', curriculum.duration_days)
     
     try:
-        # Gemini APIを使用してカリキュラムを再生成
-        gemini_service = GeminiService(GEMINI_API_KEY)
-        curriculum_data = gemini_service.generate_curriculum(goal, duration_days)
+        curriculum_data = generate_curriculum_from_gemini(goal, duration_days)
         
-        # カリキュラムデータを更新
         curriculum.title = curriculum_data.get('curriculum_title', f'{goal}の学習カリキュラム')
         curriculum.goal = goal
         curriculum.duration_days = duration_days
         curriculum.overview = curriculum_data.get('overview', '')
         curriculum.curriculum_data = json.dumps(curriculum_data, ensure_ascii=False)
         
-        # 既存の進捗レコードを削除
         CurriculumProgress.query.filter_by(curriculum_id=curriculum_id).delete()
         
-        # 新しい進捗レコードを作成
         for day in range(1, duration_days + 1):
             progress = CurriculumProgress(
                 progress_id=str(uuid.uuid4()),
@@ -193,7 +217,6 @@ def regenerate_curriculum(curriculum_id):
         db.session.rollback()
         return jsonify({'error': f'Failed to regenerate curriculum: {str(e)}'}), 500
 
-# Curriculum statistics
 @curriculum_bp.route('/curriculums/<string:curriculum_id>/stats', methods=['GET'])
 def get_curriculum_stats(curriculum_id):
     """カリキュラムの統計情報を取得"""
@@ -204,7 +227,6 @@ def get_curriculum_stats(curriculum_id):
     completed_days = len([p for p in progress_list if p.completed])
     completion_rate = (completed_days / total_days * 100) if total_days > 0 else 0
     
-    # 平均スコア計算
     scores = [p.score for p in progress_list if p.score is not None]
     average_score = sum(scores) / len(scores) if scores else 0
     
@@ -220,4 +242,3 @@ def get_curriculum_stats(curriculum_id):
     }
     
     return jsonify(stats)
-
