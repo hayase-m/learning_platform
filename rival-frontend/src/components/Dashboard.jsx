@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
 import AIFeedback from './AIFeedback'
+import { api } from '../api'
+import { auth } from '../firebase'
 
 export default function Dashboard({ user, onLogout, onNavigate }) {
   const [isStudying, setIsStudying] = useState(false)
@@ -17,7 +20,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const [isBreak, setIsBreak] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [aiMessages, setAiMessages] = useState([])
-  
+
   const studyTimerRef = useRef(null)
   const pomodoroTimerRef = useRef(null)
 
@@ -29,7 +32,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           setFocusTime(prev => prev + 1)
         }
       }, 1000)
-      
+
       pomodoroTimerRef.current = setInterval(() => {
         setPomodoroTime(prev => {
           if (prev <= 1) {
@@ -62,61 +65,46 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   }
 
   const handleStopStudy = async () => {
-    setIsStudying(false)
-    setCameraEnabled(false)
-    
-    // Save daily report
-    const today = new Date().toISOString().split('T')[0]
-    const avgFocusScore = focusTime > 0 ? (focusTime / studyTime) * 100 : 0
-    
+    setIsStudying(false);
+    setCameraEnabled(false);
+
+    const today = new Date().toISOString().split('T')[0];
+    const avgFocusScore = studyTime > 0 ? (focusTime / studyTime) * 100 : 0;
+
     try {
-      // Generate AI summary
-      const summaryResponse = await fetch('https://g8h3ilc79pek.manus.space/api/ai/summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          total_study_time: studyTime,
-          total_focus_time: focusTime,
-          avg_focus_score: avgFocusScore,
-          interruption_count: interruptionCount,
-          ai_personality: '厳しい'
-        } ),
-      })
-      
-      const summaryData = await summaryResponse.json()
-      
-      // Save report
-      await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}/reports`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: today,
-          total_study_time: studyTime,
-          total_focus_time: focusTime,
-          avg_focus_score: avgFocusScore,
-          interruption_count: interruptionCount,
-          ai_summary: summaryData.summary || '',
-        } ),
-      })
+      const summaryData = await api.generateAiSummary(auth, {
+        total_study_time: studyTime,
+        total_focus_time: focusTime,
+        avg_focus_score: avgFocusScore,
+        interruption_count: interruptionCount,
+        ai_personality: '厳しい', // これは設定から取得するように変更するのが望ましい
+      });
+
+      await api.saveDailyReport(auth, user.uid, { // user.userIdからuser.uidに変更
+        date: today,
+        total_study_time: studyTime,
+        total_focus_time: focusTime,
+        avg_focus_score: avgFocusScore,
+        interruption_count: interruptionCount,
+        ai_summary: summaryData.summary || '',
+      });
+
     } catch (error) {
-      console.error('Error saving report:', error)
+      console.error('Error saving report:', error);
+      // ユーザーにエラーを通知する処理を追加するのが望ましい
     }
-    
+
     // Reset counters
-    setStudyTime(0)
-    setFocusTime(0)
-    setInterruptionCount(0)
-    setPomodoroTime(25 * 60)
-    setIsBreak(false)
-  }
+    setStudyTime(0);
+    setFocusTime(0);
+    setInterruptionCount(0);
+    setPomodoroTime(25 * 60);
+    setIsBreak(false);
+  };
 
   const handleFocusScoreUpdate = (score) => {
     setCurrentFocusScore(score)
-    
+
     // Check for interruption
     if (score < 50 && currentFocusScore >= 50) {
       setInterruptionCount(prev => prev + 1)
@@ -127,7 +115,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
     }
@@ -230,8 +218,8 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                 <Badge variant={isBreak ? "secondary" : "default"} className="mb-4">
                   {isBreak ? '休憩時間' : '集中時間'}
                 </Badge>
-                <Progress 
-                  value={isBreak ? ((5 * 60 - pomodoroTime) / (5 * 60)) * 100 : ((25 * 60 - pomodoroTime) / (25 * 60)) * 100} 
+                <Progress
+                  value={isBreak ? ((5 * 60 - pomodoroTime) / (5 * 60)) * 100 : ((25 * 60 - pomodoroTime) / (25 * 60)) * 100}
                   className="w-full"
                 />
               </div>
@@ -249,7 +237,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                   {currentFocusScore}
                 </div>
                 <Progress value={currentFocusScore} className="w-full mb-2" />
-                <Badge 
+                <Badge
                   variant={currentFocusScore >= 80 ? "default" : currentFocusScore >= 60 ? "secondary" : "destructive"}
                 >
                   {currentFocusScore >= 80 ? '優秀' : currentFocusScore >= 60 ? '良好' : '要改善'}
@@ -288,7 +276,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
         {/* Center - Camera Feed */}
         <div>
-          <FocusMonitor 
+          <FocusMonitor
             enabled={cameraEnabled}
             onFocusScoreUpdate={handleFocusScoreUpdate}
           />
@@ -296,7 +284,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
         {/* Right Sidebar - AI Feedback */}
         <div>
-          <AIFeedback 
+          <AIFeedback
             focusScore={currentFocusScore}
             messages={aiMessages}
             onNewMessage={(message) => setAiMessages(prev => [message, ...prev.slice(0, 9)])}
