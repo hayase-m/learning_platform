@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff } from 'lucide-react'
+import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
 import AIFeedback from './AIFeedback'
 
@@ -82,7 +82,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           avg_focus_score: avgFocusScore,
           interruption_count: interruptionCount,
           ai_personality: '厳しい'
-        }),
+        } ),
       })
       
       const summaryData = await summaryResponse.json()
@@ -100,7 +100,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           avg_focus_score: avgFocusScore,
           interruption_count: interruptionCount,
           ai_summary: summaryData.summary || '',
-        }),
+        } ),
       })
     } catch (error) {
       console.error('Error saving report:', error)
@@ -148,8 +148,17 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => onNavigate('curriculum')}
+            className="text-white border-white/20 hover:bg-white/10"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            カリキュラム
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => onNavigate('reports')}
-            className="text-black-500 border-white/20 hover:bg-white/10"
+            className="text-white border-white/20 hover:bg-white/10"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             レポート
@@ -158,7 +167,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={() => onNavigate('settings')}
-            className="text-black-500 border-white/20 hover:bg-white/10"
+            className="text-white border-white/20 hover:bg-white/10"
           >
             <Settings className="w-4 h-4 mr-2" />
             設定
@@ -167,7 +176,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="text-red-500 border-red-500/20 hover:bg-white/10"
+            className="text-white border-white/20 hover:bg-white/10"
           >
             ログアウト
           </Button>
@@ -297,4 +306,3 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     </div>
   )
 }
-
