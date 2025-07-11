@@ -3,6 +3,7 @@ import LoginPage from './components/LoginPage'
 import Dashboard from './components/Dashboard'
 import ReportsPage from './components/ReportsPage'
 import SettingsPage from './components/SettingsPage'
+import CurriculumPage from './components/CurriculumPage'
 import './App.css'
 
 function App() {
@@ -28,6 +29,13 @@ function App() {
   }
 
   switch (currentPage) {
+    case 'curriculum':
+      return (
+        <CurriculumPage 
+          user={user} 
+          onBack={() => handleNavigate('dashboard')} 
+        />
+      )
     case 'reports':
       return (
         <ReportsPage 
