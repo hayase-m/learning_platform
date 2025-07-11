@@ -1,3 +1,6 @@
+import { API_BASE_URL } from '../config';
+import { api } from '../api';
+import { auth } from '../firebase';
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,47 +21,38 @@ export default function SettingsPage({ user, onBack }) {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetchUserSettings()
-  }, [])
-
-  const fetchUserSettings = async () => {
-    try {
-      const response = await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}`)
-      if (response.ok) {
-        const userData = await response.json()
-        setSettings({
-          ai_personality: userData.ai_personality,
-          notification_audio: userData.notification_audio,
-          notification_desktop: userData.notification_desktop,
-          focus_threshold: userData.focus_threshold
-        })
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-    } finally {
-      setLoading(false)
+    if (user && user.uid) {
+      fetchUserSettings(user.uid);
     }
-  }
+  }, [user]);
+
+  const fetchUserSettings = async (userId) => {
+    try {
+      const userData = await api.fetchUserSettings(auth, userId);
+      setSettings({
+        ai_personality: userData.ai_personality,
+        notification_audio: userData.notification_audio,
+        notification_desktop: userData.notification_desktop,
+        focus_threshold: userData.focus_threshold
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const saveSettings = async () => {
-    setSaving(true)
+    setSaving(true);
+    if (!user || !user.uid) return;
+
     try {
-      const response = await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings),
-      })
-      
-      if (response.ok) {
-        // Settings saved successfully
-        console.log('Settings saved')
-      }
+      await api.updateUserSettings(auth, user.uid, settings);
+      console.log('Settings saved');
     } catch (error) {
-      console.error('Error saving settings:', error)
+      console.error('Error saving settings:', error);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -166,7 +160,7 @@ export default function SettingsPage({ user, onBack }) {
                 onCheckedChange={(value) => handleNotificationChange('notification_audio', value)}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label className="text-white flex items-center gap-2">
@@ -202,7 +196,7 @@ export default function SettingsPage({ user, onBack }) {
                 この値以下になると「集中力低下」として判定されます
               </p>
             </div>
-            
+
             <div className="px-2">
               <Slider
                 value={[settings.focus_threshold]}
@@ -218,7 +212,7 @@ export default function SettingsPage({ user, onBack }) {
                 <span>100 (鈍感)</span>
               </div>
             </div>
-            
+
             <div className="bg-slate-800/50 p-3 rounded-lg">
               <p className="text-sm text-slate-300">
                 <strong>推奨設定:</strong> 初回利用時は70前後に設定し、
@@ -269,4 +263,3 @@ export default function SettingsPage({ user, onBack }) {
     </div>
   )
 }
-

@@ -8,8 +8,10 @@ from datetime import datetime
 
 curriculum_bp = Blueprint('curriculum', __name__)
 
-# Gemini API key (本来は環境変数から取得すべき)
+# Gemini APIキーを環境変数から読み込む
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not found in environment variables.")
 genai.configure(api_key=GEMINI_API_KEY)
 
 def generate_curriculum_from_gemini(goal, duration_days):
