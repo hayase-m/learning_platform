@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
 import AIFeedback from './AIFeedback'
+import ThemeToggle from './ThemeToggle'
 import { api } from '../api'
 import { auth } from '../firebase'
 
@@ -154,11 +155,12 @@ export default function Dashboard({ user, onLogout }) {
           AI Study Buddy <span className="text-primary">"Rival"</span>
         </h1>
         <div className="flex gap-2">
+          <ThemeToggle />
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/curriculum')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <BookOpen className="w-4 h-4 mr-2" />
             カリキュラム
@@ -167,7 +169,7 @@ export default function Dashboard({ user, onLogout }) {
             variant="outline"
             size="sm"
             onClick={() => navigate('/reports')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             レポート
@@ -176,7 +178,7 @@ export default function Dashboard({ user, onLogout }) {
             variant="outline"
             size="sm"
             onClick={() => navigate('/settings')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <Settings className="w-4 h-4 mr-2" />
             設定
@@ -185,7 +187,7 @@ export default function Dashboard({ user, onLogout }) {
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="text-destructive border-red-500/20 hover:bg-white/10"
+            className="text-destructive border-destructive hover:bg-card"
           >
             ログアウト
           </Button>
@@ -196,35 +198,52 @@ export default function Dashboard({ user, onLogout }) {
         {/* Left Sidebar - Controls and Stats */}
         <div className="space-y-6">
           {/* Study Controls */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-card-foreground flex items-center gap-2">
                 {cameraEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                 学習コントロール
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {!isStudying && (
-                <div className="space-y-2">
-                  <Label htmlFor="cycles" className="text-white flex items-center gap-2">
+                <div className="space-y-3">
+                  <Label htmlFor="cycles" className="text-card-foreground flex items-center gap-2 font-medium">
                     <Repeat className="w-4 h-4" />
-                    サイクル数
+                    目標サイクル数
                   </Label>
-                  <Input
-                    id="cycles"
-                    type="number"
-                    value={targetCycles}
-                    onChange={(e) => setTargetCycles(Math.max(parseInt(e.target.value, 10) || 1, 1))}
-                    min="1"
-                    className="bg-white/10 border-white/20 text-white"
-                    disabled={isStudying}
-                  />
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTargetCycles(Math.max(targetCycles - 1, 1))}
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
+                      disabled={targetCycles <= 1}
+                    >
+                      -
+                    </Button>
+                    <div className="flex-1 text-center">
+                      <div className="text-2xl font-bold text-foreground">{targetCycles}</div>
+                      <div className="text-xs text-muted-foreground">{targetCycles * 25}分 + 休憩</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTargetCycles(Math.min(targetCycles + 1, 16))}
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
+                      disabled={targetCycles >= 16}
+                    >
+                      +
+                    </Button>
+                  </div>
                 </div>
               )}
               {!isStudying ? (
                 <Button
                   onClick={handleStartStudy}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-card-foreground"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   学習開始
@@ -232,7 +251,7 @@ export default function Dashboard({ user, onLogout }) {
               ) : (
                 <Button
                   onClick={handleStopStudy}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-red-700 text-card-foreground"
                 >
                   <Square className="w-4 h-4 mr-2" />
                   学習終了
@@ -242,9 +261,9 @@ export default function Dashboard({ user, onLogout }) {
           </Card>
 
           {/* Pomodoro Timer */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">
+              <CardTitle className="text-card-foreground">
                 学習タイマー
               </CardTitle>
             </CardHeader>
@@ -261,7 +280,7 @@ export default function Dashboard({ user, onLogout }) {
                   className="w-full"
                 />
                 {isStudying && (
-                  <div className="text-sm text-white/70 mt-2">
+                  <div className="text-sm text-card-foreground/70 mt-2">
                     サイクル: {currentCycle} / {targetCycles}
                   </div>
                 )}
@@ -270,9 +289,9 @@ export default function Dashboard({ user, onLogout }) {
           </Card>
 
           {/* Focus Score */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">集中スコア</CardTitle>
+              <CardTitle className="text-card-foreground">集中スコア</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center">
@@ -290,16 +309,16 @@ export default function Dashboard({ user, onLogout }) {
           </Card>
 
           {/* Real-time Stats */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">リアルタイム統計</CardTitle>
+              <CardTitle className="text-card-foreground">リアルタイム統計</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-foreground">
                 <span>総学習時間:</span>
                 <span className="font-mono">{formatTime(studyTime)}</span>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-card-foreground">
                 <span>中断回数:</span>
                 <span className="font-mono">{interruptionCount}</span>
               </div>

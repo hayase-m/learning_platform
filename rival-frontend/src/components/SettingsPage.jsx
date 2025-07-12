@@ -86,7 +86,7 @@ export default function SettingsPage({ user, onBack }) {
           variant="outline"
           size="sm"
           onClick={onBack}
-          className="text-foreground border-white/20 hover:bg-white/10"
+          className="text-foreground border hover:bg-card"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           ダッシュボードに戻る
@@ -98,7 +98,7 @@ export default function SettingsPage({ user, onBack }) {
 
       <div className="max-w-2xl mx-auto space-y-6">
         {/* AI Personality Settings */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Brain className="w-5 h-5" />
@@ -137,7 +137,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Notification Settings */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Bell className="w-5 h-5" />
@@ -180,7 +180,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Focus Threshold Settings */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Gauge className="w-5 h-5" />
@@ -213,7 +213,7 @@ export default function SettingsPage({ user, onBack }) {
               </div>
             </div>
 
-            <div className="bg-slate-800/50 p-3 rounded-lg">
+            <div className="bg-muted/50 p-3 rounded-lg">
               <p className="text-sm text-muted-foreground">
                 <strong>推奨設定:</strong> 初回利用時は70前後に設定し、
                 使用しながら自分の環境に合わせて調整してください。
@@ -223,7 +223,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Privacy Information */}
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Settings className="w-5 h-5" />
@@ -254,7 +254,7 @@ export default function SettingsPage({ user, onBack }) {
           <Button
             onClick={saveSettings}
             disabled={saving}
-            className="bg-purple-600 hover:bg-purple-700 text-foreground px-8"
+            className="bg-primary hover:bg-primary/90 text-foreground px-8"
           >
             {saving ? '保存中...' : '設定を保存'}
           </Button>
