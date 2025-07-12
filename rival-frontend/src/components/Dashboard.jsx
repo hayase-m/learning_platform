@@ -1,83 +1,53 @@
 import { API_BASE_URL } from '../config';
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
 import AIFeedback from './AIFeedback'
 import { api } from '../api'
 import { auth } from '../firebase'
 
+const WORK_DURATION = 25 * 60; // 25 minutes in seconds
+const BREAK_DURATION = 5 * 60; // 5 minutes in seconds
+
 export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate()
   const [isStudying, setIsStudying] = useState(false)
   const [studyTime, setStudyTime] = useState(0)
-  const [focusTime, setFocusTime] = useState(0)
   const [currentFocusScore, setCurrentFocusScore] = useState(75)
   const [interruptionCount, setInterruptionCount] = useState(0)
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60) // 25 minutes
+  const [pomodoroTime, setPomodoroTime] = useState(WORK_DURATION) // 25 minutes
   const [isBreak, setIsBreak] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [aiMessages, setAiMessages] = useState([])
+  
+  const [targetCycles, setTargetCycles] = useState(4)
+  const [currentCycle, setCurrentCycle] = useState(1)
 
   const studyTimerRef = useRef(null)
   const pomodoroTimerRef = useRef(null)
 
-  useEffect(() => {
-    if (isStudying) {
-      studyTimerRef.current = setInterval(() => {
-        setStudyTime(prev => prev + 1)
-        if (currentFocusScore >= 70) {
-          setFocusTime(prev => prev + 1)
-        }
-      }, 1000)
-
-      pomodoroTimerRef.current = setInterval(() => {
-        setPomodoroTime(prev => {
-          if (prev <= 1) {
-            // Pomodoro cycle complete
-            if (isBreak) {
-              setIsBreak(false)
-              return 25 * 60 // Back to work
-            } else {
-              setIsBreak(true)
-              return 5 * 60 // Break time
-            }
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } else {
-      clearInterval(studyTimerRef.current)
-      clearInterval(pomodoroTimerRef.current)
-    }
-
-    return () => {
-      clearInterval(studyTimerRef.current)
-      clearInterval(pomodoroTimerRef.current)
-    }
-  }, [isStudying, currentFocusScore, isBreak])
-
   const handleStartStudy = () => {
+    setCurrentCycle(1)
     setIsStudying(true)
     setCameraEnabled(true)
   }
 
-  const handleStopStudy = async () => {
+  const handleStopStudy = useCallback(async () => {
     setIsStudying(false);
     setCameraEnabled(false);
 
     const today = new Date().toISOString().split('T')[0];
-    const avgFocusScore = studyTime > 0 ? (focusTime / studyTime) * 100 : 0;
 
     try {
       const summaryData = await api.generateAiSummary(auth, {
         total_study_time: studyTime,
-        total_focus_time: focusTime,
-        avg_focus_score: avgFocusScore,
         interruption_count: interruptionCount,
         ai_personality: '厳しい', // これは設定から取得するように変更するのが望ましい
       });
@@ -85,8 +55,7 @@ export default function Dashboard({ user, onLogout }) {
       await api.saveDailyReport(auth, user.uid, { // user.userIdからuser.uidに変更
         date: today,
         total_study_time: studyTime,
-        total_focus_time: focusTime,
-        avg_focus_score: avgFocusScore,
+        avg_focus_score: currentFocusScore,
         interruption_count: interruptionCount,
         ai_summary: summaryData.summary || '',
       });
@@ -98,11 +67,61 @@ export default function Dashboard({ user, onLogout }) {
 
     // Reset counters
     setStudyTime(0);
-    setFocusTime(0);
     setInterruptionCount(0);
-    setPomodoroTime(25 * 60);
+    setPomodoroTime(WORK_DURATION);
     setIsBreak(false);
-  };
+    setCurrentCycle(1);
+  }, [studyTime, interruptionCount, currentFocusScore, user]);
+
+  // ポモドーロタイマーのサイクル遷移ロジック
+  useEffect(() => {
+    if (isStudying && pomodoroTime <= 0) {
+      if (isBreak) {
+        // 休憩終了 -> 次の集中時間へ
+        setIsBreak(false);
+        setCurrentCycle(prevCycle => {
+          const nextCycle = prevCycle + 1;
+          // 目標サイクルに到達したら自動的に停止
+          if (nextCycle > targetCycles) {
+            handleStopStudy();
+            return prevCycle; // 停止するのでサイクルは進めない
+          }
+          return nextCycle;
+        });
+        setPomodoroTime(WORK_DURATION);
+      } else {
+      // 集中終了 -> 休憩へ
+      setIsBreak(true);
+      setPomodoroTime(BREAK_DURATION);
+    }
+  }
+}, [pomodoroTime, isStudying, isBreak, currentCycle, targetCycles, handleStopStudy]);
+
+  useEffect(() => {
+    if (isStudying) {
+      studyTimerRef.current = setInterval(() => {
+        setStudyTime(prev => prev + 1)
+      }, 1000)
+
+      pomodoroTimerRef.current = setInterval(() => {
+        setPomodoroTime(prevPomodoroTime => {
+          if (prevPomodoroTime <= 1) {
+            // タイマーが0になったら、次の状態への遷移は別のuseEffectで処理
+            return 0; // 一旦0に設定し、次のuseEffectで処理をトリガー
+          }
+          return prevPomodoroTime - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(studyTimerRef.current);
+      clearInterval(pomodoroTimerRef.current);
+    }
+
+    return () => {
+      clearInterval(studyTimerRef.current);
+      clearInterval(pomodoroTimerRef.current);
+    };
+  }, [isStudying]); // Narrowed dependency array to only isStudying
 
   const handleFocusScoreUpdate = (score) => {
     setCurrentFocusScore(score)
@@ -185,6 +204,23 @@ export default function Dashboard({ user, onLogout }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!isStudying && (
+                <div className="space-y-2">
+                  <Label htmlFor="cycles" className="text-white flex items-center gap-2">
+                    <Repeat className="w-4 h-4" />
+                    サイクル数
+                  </Label>
+                  <Input
+                    id="cycles"
+                    type="number"
+                    value={targetCycles}
+                    onChange={(e) => setTargetCycles(Math.max(parseInt(e.target.value, 10) || 1, 1))}
+                    min="1"
+                    className="bg-white/10 border-white/20 text-white"
+                    disabled={isStudying}
+                  />
+                </div>
+              )}
               {!isStudying ? (
                 <Button
                   onClick={handleStartStudy}
@@ -209,7 +245,7 @@ export default function Dashboard({ user, onLogout }) {
           <Card className="bg-white/10 backdrop-blur-md border-white/20">
             <CardHeader>
               <CardTitle className="text-white">
-                インテリジェント・ポモドーロ
+                学習タイマー
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -221,9 +257,14 @@ export default function Dashboard({ user, onLogout }) {
                   {isBreak ? '休憩時間' : '集中時間'}
                 </Badge>
                 <Progress
-                  value={isBreak ? ((5 * 60 - pomodoroTime) / (5 * 60)) * 100 : ((25 * 60 - pomodoroTime) / (25 * 60)) * 100}
+                  value={isBreak ? ((BREAK_DURATION - pomodoroTime) / BREAK_DURATION) * 100 : ((WORK_DURATION - pomodoroTime) / WORK_DURATION) * 100}
                   className="w-full"
                 />
+                {isStudying && (
+                  <div className="text-sm text-white/70 mt-2">
+                    サイクル: {currentCycle} / {targetCycles}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -259,18 +300,8 @@ export default function Dashboard({ user, onLogout }) {
                 <span className="font-mono">{formatTime(studyTime)}</span>
               </div>
               <div className="flex justify-between text-white">
-                <span>集中時間:</span>
-                <span className="font-mono">{formatTime(focusTime)}</span>
-              </div>
-              <div className="flex justify-between text-white">
                 <span>中断回数:</span>
                 <span className="font-mono">{interruptionCount}</span>
-              </div>
-              <div className="flex justify-between text-white">
-                <span>集中率:</span>
-                <span className="font-mono">
-                  {studyTime > 0 ? Math.round((focusTime / studyTime) * 100) : 0}%
-                </span>
               </div>
             </CardContent>
           </Card>
