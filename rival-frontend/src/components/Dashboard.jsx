@@ -68,25 +68,50 @@ export default function Dashboard({ user }) {
     setCameraEnabled(false);
 
     const today = new Date().toISOString().split('T')[0];
+    const userId = user?.uid || 'sample_user_123';
+    const totalFocusTime = Math.round(studyTime * (currentFocusScore / 100));
 
     try {
+      // AI要約を生成
       const summaryData = await api.generateAiSummary(auth, {
         total_study_time: studyTime,
-        interruption_count: interruptionCount,
-        ai_personality: '厳しい', // これは設定から取得するように変更するのが望ましい
-      });
-
-      await api.saveDailyReport(auth, user.uid, { // user.userIdからuser.uidに変更
-        date: today,
-        total_study_time: studyTime,
+        total_focus_time: totalFocusTime,
         avg_focus_score: currentFocusScore,
         interruption_count: interruptionCount,
-        ai_summary: summaryData.summary || '',
+        ai_personality: '厳しい'
       });
+
+      // 既存のレポートを取得して更新、または新規作成
+      let existingReport = null;
+      try {
+        existingReport = await api.fetchUserReports(auth, userId, today);
+      } catch (error) {
+        console.log('No existing report found, creating new one');
+      }
+
+      const reportData = {
+        date: today,
+        total_study_time: (existingReport?.total_study_time || 0) + studyTime,
+        total_focus_time: (existingReport?.total_focus_time || 0) + totalFocusTime,
+        avg_focus_score: existingReport ? 
+          ((existingReport.avg_focus_score + currentFocusScore) / 2) : currentFocusScore,
+        interruption_count: (existingReport?.interruption_count || 0) + interruptionCount,
+        ai_summary: summaryData.summary || '',
+        user_notes: existingReport?.user_notes || ''
+      };
+
+      if (existingReport) {
+        await api.updateDailyReport(auth, userId, today, reportData);
+      } else {
+        await api.saveDailyReport(auth, userId, reportData);
+      }
+
+      console.log('Study session saved successfully:', reportData);
+      alert(`学習セッションを保存しました！\n学習時間: ${formatTime(studyTime)}\n集中時間: ${formatTime(totalFocusTime)}`);
 
     } catch (error) {
       console.error('Error saving report:', error);
-      // ユーザーにエラーを通知する処理を追加するのが望ましい
+      alert('学習データの保存に失敗しました。もう一度お試しください。');
     }
 
     // Reset counters
@@ -97,9 +122,18 @@ export default function Dashboard({ user }) {
     setCurrentCycle(1);
   }, [studyTime, interruptionCount, currentFocusScore, user]);
 
+  const playNotificationSound = () => {
+    // publicフォルダに置いたファイルへのパスを指定
+    const audio = new Audio('/notification.mp3'); 
+    audio.play();
+  };
+
   // ポモドーロタイマーのサイクル遷移ロジック
   useEffect(() => {
     if (isStudying && pomodoroTime <= 0) {
+      // 通知音を再生
+      playNotificationSound();
+      
       if (isBreak) {
         // 休憩終了 -> 次の集中時間へ
         setIsBreak(false);
@@ -293,7 +327,7 @@ export default function Dashboard({ user }) {
                   {pomodoroMinutes}:{pomodoroSeconds.toString().padStart(2, '0')}
                 </div>
                 <Badge variant={isBreak ? "secondary" : "default"} className="mb-4">
-                  {isBreak ? '休憩時間' : '集中時間'}
+                  {isBreak ? '🛌 休憩時間' : '📚 集中時間'}
                 </Badge>
                 <Progress
                   value={isBreak ? ((BREAK_DURATION - pomodoroTime) / BREAK_DURATION) * 100 : ((WORK_DURATION - pomodoroTime) / WORK_DURATION) * 100}
@@ -393,6 +427,16 @@ export default function Dashboard({ user }) {
             </Card>
           )}
 
+
+        </div>
+
+        {/* Center - Camera Feed */}
+        <div className="space-y-6">
+          <FocusMonitor
+            enabled={cameraEnabled}
+            onFocusScoreUpdate={handleFocusScoreUpdate}
+          />
+          
           {/* Real-time Stats */}
           <Card className="bg-card border dark:border-white">
             <CardHeader>
@@ -409,14 +453,6 @@ export default function Dashboard({ user }) {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Center - Camera Feed */}
-        <div>
-          <FocusMonitor
-            enabled={cameraEnabled}
-            onFocusScoreUpdate={handleFocusScoreUpdate}
-          />
         </div>
 
         {/* Right Sidebar - Learning Activities */}
