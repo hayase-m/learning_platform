@@ -14,7 +14,7 @@ Flaskを使用したバックエンドサーバーです。ユーザー情報、
 
 2. **依存関係のインストール**
    ```bash
-   pip install -r requirements.txt
+   pip install --no-user -r requirements.txt
    ```
 
 3. **環境変数ファイルの設定**
