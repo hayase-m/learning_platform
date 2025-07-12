@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat, Clock } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
+import ThemeToggle from './ThemeToggle'
 import { api } from '../api'
 import { auth } from '../firebase'
 
@@ -375,32 +376,36 @@ export default function Dashboard({ user, onLogout }) {
 
           {/* Selected Task */}
           {selectedTask && (
-            <Card className="bg-blue-500/20 backdrop-blur-md border-blue-400/30">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
+            <Card className="bg-gradient-to-br from-primary/20 to-primary/10 border-primary/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-card-foreground flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
                   選択中のタスク
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-white">
-                  <div className="font-medium">第{selectedTask.day}日目: {selectedTask.title}</div>
-                  <div className="text-sm text-white/70 mt-1">{selectedTask.curriculumTitle}</div>
+              <CardContent className="space-y-4">
+                <div className="bg-card/50 p-3 rounded-lg">
+                  <div className="font-semibold text-foreground text-lg">第{selectedTask.day}日目</div>
+                  <div className="text-foreground font-medium">{selectedTask.title}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{selectedTask.curriculumTitle}</div>
                 </div>
                 {selectedTask.objectives && (
-                  <div>
-                    <div className="text-sm font-medium text-white mb-1">今日の目標:</div>
-                    <ul className="text-sm text-white/80 space-y-1">
+                  <div className="bg-card/30 p-3 rounded-lg">
+                    <div className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-primary rounded-full"></span>
+                      今日の目標
+                    </div>
+                    <ul className="text-sm text-card-foreground space-y-1.5">
                       {selectedTask.objectives.slice(0, 2).map((obj, idx) => (
-                        <li key={idx} className="flex items-start gap-1">
-                          <span className="text-blue-400">•</span>
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-primary mt-1">▸</span>
                           <span>{obj}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Button
                     onClick={async () => {
                       try {
@@ -413,10 +418,10 @@ export default function Dashboard({ user, onLogout }) {
                         alert('タスクの完了に失敗しました');
                       }
                     }}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
                     size="sm"
                   >
-                    完了
+                    ✓ 完了
                   </Button>
                   <Button
                     onClick={() => {
@@ -425,7 +430,7 @@ export default function Dashboard({ user, onLogout }) {
                     }}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-white border-white/20 hover:bg-white/10"
+                    className="flex-1"
                   >
                     クリア
                   </Button>
@@ -463,15 +468,15 @@ export default function Dashboard({ user, onLogout }) {
         {/* Right Sidebar - Learning Activities */}
         <div>
           {selectedTask ? (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="text-card-foreground flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
                   学習活動チェックリスト
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-sm text-white/70 mb-4">
+                <div className="text-sm text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
                   第{selectedTask.day}日目: {selectedTask.title}
                 </div>
                 {selectedTask.activities?.map((activity, index) => {
@@ -479,25 +484,25 @@ export default function Dashboard({ user, onLogout }) {
                   const isChecked = activityChecklist[checkKey] || false;
 
                   return (
-                    <div key={index} className="bg-white/5 p-3 rounded-lg space-y-2">
+                    <div key={index} className="bg-muted/30 p-3 rounded-lg border">
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleActivityCheck(index, e.target.checked)}
-                          className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                          className="mt-1 w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4" />
-                            <span className={`font-medium ${isChecked ? 'line-through text-white/50' : 'text-white'}`}>
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <span className={`font-medium ${isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                               {activity.title}
                             </span>
                             <Badge variant="secondary" className="text-xs">
                               {activity.duration_minutes}分
                             </Badge>
                           </div>
-                          <p className={`text-sm ${isChecked ? 'line-through text-white/30' : 'text-white/70'}`}>
+                          <p className={`text-sm ${isChecked ? 'line-through text-muted-foreground/70' : 'text-muted-foreground'}`}>
                             {activity.description}
                           </p>
                         </div>
@@ -514,8 +519,8 @@ export default function Dashboard({ user, onLogout }) {
                   const isAllCompleted = completedCount === totalCount;
 
                   return (
-                    <div className="pt-2 border-t border-white/10 space-y-3">
-                      <div className="text-sm text-white/70">
+                    <div className="pt-2 border-t border-border space-y-3">
+                      <div className="text-sm text-muted-foreground">
                         進捗: {completedCount} / {totalCount}
                       </div>
                       <Progress
@@ -542,7 +547,7 @@ export default function Dashboard({ user, onLogout }) {
                               alert('タスクの完了に失敗しました');
                             }
                           }}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          className="w-full bg-green-600 hover:bg-green-700"
                           size="sm"
                         >
                           🎉 全ての活動を完了！
@@ -554,11 +559,11 @@ export default function Dashboard({ user, onLogout }) {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardContent className="p-6 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-white/50" />
-                <p className="text-white/70">タスクが選択されていません</p>
-                <p className="text-white/50 text-sm">カリキュラムからタスクを選択してください</p>
+                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">タスクが選択されていません</p>
+                <p className="text-muted-foreground/70 text-sm">カリキュラムからタスクを選択してください</p>
               </CardContent>
             </Card>
           )}
