@@ -176,15 +176,15 @@ export default function CurriculumPage({ user, onBack }) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-card border">
-          <TabsTrigger value="create" className="text-foreground data-[state=active]:bg-white/20">
+          <TabsTrigger value="create" className="text-foreground data-[state=active]:bg-accent">
             <Plus className="w-4 h-4 mr-2" />
             新規作成
           </TabsTrigger>
-          <TabsTrigger value="list" className="text-foreground data-[state=active]:bg-white/20">
+          <TabsTrigger value="list" className="text-foreground data-[state=active]:bg-accent">
             <BookOpen className="w-4 h-4 mr-2" />
             カリキュラム一覧
           </TabsTrigger>
-          <TabsTrigger value="view" className="text-foreground data-[state=active]:bg-white/20" disabled={!selectedCurriculum}>
+          <TabsTrigger value="view" className="text-foreground data-[state=active]:bg-accent" disabled={!selectedCurriculum}>
             <Target className="w-4 h-4 mr-2" />
             詳細表示
           </TabsTrigger>
@@ -209,23 +209,56 @@ export default function CurriculumPage({ user, onBack }) {
                     value={formData.goal}
                     onChange={(e) => setFormData(prev => ({ ...prev, goal: e.target.value }))}
                     required
-                    className="bg-white/10 border text-foreground placeholder:text-foreground/50"
+                    className="bg-card border text-foreground placeholder:text-foreground/50"
                     rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration" className="text-foreground">学習期間（日数）</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min="7"
-                    max="60"
-                    value={formData.duration_days}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration_days: parseInt(e.target.value) }))}
-                    required
-                    className="bg-white/10 border text-foreground"
-                  />
-                  <p className="text-sm text-foreground/70">7日から60日まで設定できます</p>
+                <div className="space-y-3">
+                  <Label htmlFor="duration" className="text-foreground font-medium flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    学習期間
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.max(prev.duration_days - 7, 7) }))}
+                      className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
+                      disabled={formData.duration_days <= 7}
+                    >
+                      -
+                    </Button>
+                    <div className="flex-1 text-center bg-muted/50 rounded-lg p-3">
+                      <div className="text-3xl font-bold text-foreground">{formData.duration_days}</div>
+                      <div className="text-sm text-muted-foreground">日間</div>
+                      <div className="text-xs text-muted-foreground mt-1">約{Math.ceil(formData.duration_days / 7)}週間</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.min(prev.duration_days + 7, 60) }))}
+                      className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
+                      disabled={formData.duration_days >= 60}
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {[14, 21, 30, 45].map(days => (
+                      <Button
+                        key={days}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFormData(prev => ({ ...prev, duration_days: days }))}
+                        className={`text-xs ${formData.duration_days === days ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+                      >
+                        {days}日
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <Button
                   type="submit"
@@ -454,7 +487,7 @@ export default function CurriculumPage({ user, onBack }) {
                               <h4 className="font-medium text-foreground mb-2">学習活動</h4>
                               <div className="space-y-2">
                                 {plan.activities?.map((activity, index) => (
-                                  <div key={index} className="bg-white/5 p-3 rounded-lg">
+                                  <div key={index} className="bg-muted/50 p-3 rounded-lg">
                                     <div className="flex items-center gap-2 mb-1">
                                       <Clock className="w-4 h-4" />
                                       <span className="font-medium">{activity.title}</span>
@@ -511,7 +544,7 @@ export default function CurriculumPage({ user, onBack }) {
                   <CardContent>
                     <div className="space-y-3">
                       {selectedCurriculum.curriculum_data.milestones.map((milestone, index) => (
-                        <div key={index} className="bg-white/5 p-4 rounded-lg">
+                        <div key={index} className="bg-muted/50 p-4 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Trophy className="w-4 h-4 text-yellow-400" />
                             <span className="font-medium text-foreground">第{milestone.day}日目: {milestone.title}</span>

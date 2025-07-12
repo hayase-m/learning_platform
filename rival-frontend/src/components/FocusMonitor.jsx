@@ -107,7 +107,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
 
   if (!enabled) {
     return (
-      <Card className="bg-white/10 backdrop-blur-md border-white/20">
+      <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-card-foreground flex items-center gap-2">
             <CameraOff className="w-5 h-5" />
@@ -115,7 +115,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
+          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
             <div className="text-center text-muted-foreground">
               <CameraOff className="w-12 h-12 mx-auto mb-2" />
               <p>学習を開始してカメラを有効にしてください</p>
@@ -127,7 +127,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   }
 
   return (
-    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-card-foreground flex items-center gap-2">
           <Camera className="w-5 h-5" />
@@ -147,7 +147,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
         <div className="relative">
           <video
             ref={videoRef}
-            className="w-full aspect-video bg-slate-800 rounded-lg"
+            className="w-full aspect-video bg-muted rounded-lg"
             autoPlay
             muted
             playsInline
@@ -159,7 +159,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           />
           
           {isLoading && (
-            <div className="absolute inset-0 bg-slate-800/50 rounded-lg flex items-center justify-center">
+            <div className="absolute inset-0 bg-muted/50 rounded-lg flex items-center justify-center">
               <div className="text-foreground">カメラを起動中...</div>
             </div>
           )}

@@ -94,7 +94,7 @@ export default function ReportsPage({ user, onBack }) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5" />
@@ -119,7 +119,7 @@ export default function ReportsPage({ user, onBack }) {
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
           {loading ? (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardContent className="p-8 text-center">
                 <div className="text-foreground">レポートを読み込み中...</div>
               </CardContent>
@@ -128,7 +128,7 @@ export default function ReportsPage({ user, onBack }) {
             <>
               {/* Summary Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <Clock className="w-8 h-8 text-blue-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -138,7 +138,7 @@ export default function ReportsPage({ user, onBack }) {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <Target className="w-8 h-8 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -148,7 +148,7 @@ export default function ReportsPage({ user, onBack }) {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <div className="text-2xl font-bold text-foreground">
                       {Math.round(reportData.avg_focus_score)}
@@ -157,7 +157,7 @@ export default function ReportsPage({ user, onBack }) {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -169,7 +169,7 @@ export default function ReportsPage({ user, onBack }) {
               </div>
 
               {/* Focus Score Chart */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">時間帯別集中度推移</CardTitle>
                 </CardHeader>
@@ -210,12 +210,12 @@ export default function ReportsPage({ user, onBack }) {
               </Card>
 
               {/* AI Summary */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">AIライバルからの総評</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-slate-800/50 p-4 rounded-lg">
+                  <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="text-card-foreground leading-relaxed">
                       {reportData.ai_summary}
                     </p>
@@ -224,7 +224,7 @@ export default function ReportsPage({ user, onBack }) {
               </Card>
 
               {/* User Notes */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
                 </CardHeader>
@@ -233,11 +233,11 @@ export default function ReportsPage({ user, onBack }) {
                     value={userNotes}
                     onChange={(e) => setUserNotes(e.target.value)}
                     placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-white/10 border-white/20 text-card-foreground placeholder:text-muted-foreground min-h-24"
+                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
                   />
                   <Button
                     onClick={saveUserNotes}
-                    className="bg-purple-600 hover:bg-purple-700 text-card-foreground"
+                    className="bg-primary hover:bg-primary/90 text-card-foreground"
                   >
                     メモを保存
                   </Button>
@@ -245,7 +245,7 @@ export default function ReportsPage({ user, onBack }) {
               </Card>
             </>
           ) : (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardContent className="p-8 text-center">
                 <div className="text-muted-foreground mb-4">
                   選択した日付のレポートがありません
