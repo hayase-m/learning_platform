@@ -15,22 +15,29 @@ export default function ReportsPage({ user, onBack }) {
 
   useEffect(() => {
     const userId = user?.uid || 'sample_user_123';
+    const dateKey = selectedDate.toISOString().split('T')[0];
+    console.log('Date changed to:', dateKey);
     fetchReport(selectedDate, userId);
   }, [selectedDate, user]);
 
   const fetchReport = async (date, userId) => {
     setLoading(true);
     const dateString = date.toISOString().split('T')[0];
-    console.log('Fetching report for:', dateString, 'userId:', userId);
+    console.log('Fetching report for date:', dateString, 'userId:', userId);
+    
+    // 状態をリセット
+    setReportData(null);
+    setUserNotes('');
     
     try {
       const data = await api.fetchUserReports(auth, userId, dateString);
-      console.log('Report data received:', data);
+      console.log('API response:', data);
       if (data) {
+        console.log('Setting report data:', data);
         setReportData(data);
         setUserNotes(data.user_notes || '');
       } else {
-        console.log('No report data found for date:', dateString);
+        console.log('No data found for date:', dateString);
         setReportData(null);
         setUserNotes('');
       }
@@ -44,17 +51,32 @@ export default function ReportsPage({ user, onBack }) {
   };
 
   const saveUserNotes = async () => {
-    if (!reportData) return
-    
     try {
       const dateString = selectedDate.toISOString().split('T')[0];
       const userId = user?.uid || 'sample_user_123';
-      await api.updateDailyReport(auth, userId, dateString, {
-        ...reportData,
-        user_notes: userNotes,
-      });
+      
+      if (reportData) {
+        await api.updateDailyReport(auth, userId, dateString, {
+          ...reportData,
+          user_notes: userNotes,
+        });
+      } else {
+        const newReport = {
+          date: dateString,
+          total_study_time: 0,
+          total_focus_time: 0,
+          avg_focus_score: 0,
+          interruption_count: 0,
+          ai_summary: '',
+          user_notes: userNotes
+        };
+        await api.saveDailyReport(auth, userId, newReport);
+        setReportData(newReport);
+      }
+      alert('メモを保存しました！');
     } catch (error) {
       console.error('Error saving notes:', error);
+      alert('メモの保存に失敗しました。');
     }
   }
 
@@ -68,11 +90,8 @@ export default function ReportsPage({ user, onBack }) {
     return `${minutes}分`
   }
 
-
-
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="outline"
@@ -89,7 +108,6 @@ export default function ReportsPage({ user, onBack }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Calendar Sidebar */}
         <div className="lg:col-span-1">
           <Card className="bg-card border">
             <CardHeader>
@@ -117,7 +135,6 @@ export default function ReportsPage({ user, onBack }) {
           </Card>
         </div>
 
-        {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
           {loading ? (
             <Card className="bg-card border">
@@ -127,7 +144,6 @@ export default function ReportsPage({ user, onBack }) {
             </Card>
           ) : reportData ? (
             <>
-              {/* Summary Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
@@ -169,9 +185,6 @@ export default function ReportsPage({ user, onBack }) {
                 </Card>
               </div>
 
-
-
-              {/* AI Summary */}
               <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">AIライバルからの総評</CardTitle>
@@ -185,7 +198,6 @@ export default function ReportsPage({ user, onBack }) {
                 </CardContent>
               </Card>
 
-              {/* User Notes */}
               <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
@@ -207,20 +219,41 @@ export default function ReportsPage({ user, onBack }) {
               </Card>
             </>
           ) : (
-            <Card className="bg-card border">
-              <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground mb-4">
-                  選択した日付のレポートがありません
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  学習を開始してデータを蓄積してください
-                </div>
-              </CardContent>
-            </Card>
+            <>
+              <Card className="bg-card border">
+                <CardContent className="p-8 text-center">
+                  <div className="text-muted-foreground mb-4">
+                    選択した日付のレポートがありません
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    学習を開始してデータを蓄積してください
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-card border">
+                <CardHeader>
+                  <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Textarea
+                    value={userNotes}
+                    onChange={(e) => setUserNotes(e.target.value)}
+                    placeholder="今日の学習について振り返りや明日の目標を記入してください..."
+                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
+                  />
+                  <Button
+                    onClick={saveUserNotes}
+                    className="bg-primary hover:bg-primary/90 text-card-foreground"
+                  >
+                    メモを保存
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </div>
     </div>
   )
 }
-
