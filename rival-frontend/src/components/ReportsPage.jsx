@@ -13,16 +13,23 @@ export default function ReportsPage({ user, onBack }) {
   const [userNotes, setUserNotes] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   useEffect(() => {
     const userId = user?.uid || 'sample_user_123';
-    const dateKey = selectedDate.toISOString().split('T')[0];
+    const dateKey = formatDate(selectedDate);
     console.log('Date changed to:', dateKey);
     fetchReport(selectedDate, userId);
   }, [selectedDate, user]);
 
   const fetchReport = async (date, userId) => {
     setLoading(true);
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatDate(date);
     console.log('Fetching report for date:', dateString, 'userId:', userId);
     
     // 状態をリセット
@@ -52,7 +59,7 @@ export default function ReportsPage({ user, onBack }) {
 
   const saveUserNotes = async () => {
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
+      const dateString = formatDate(selectedDate);
       const userId = user?.uid || 'sample_user_123';
       
       if (reportData) {
@@ -119,12 +126,9 @@ export default function ReportsPage({ user, onBack }) {
             <CardContent>
               <Calendar
                 mode="single"
+                disableUnselect
                 selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                  }
-                }}
+                onSelect={(date) => date && setSelectedDate(new Date(date))}
                 className="text-card-foreground"
                 classNames={{
                   day_selected: "bg-purple-600 text-card-foreground",
