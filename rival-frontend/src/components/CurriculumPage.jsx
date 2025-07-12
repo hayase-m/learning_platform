@@ -10,18 +10,20 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { 
-  ArrowLeft, 
-  Target, 
-  Calendar, 
-  BookOpen, 
-  CheckCircle2, 
-  Circle, 
+import {
+  ArrowLeft,
+  Target,
+  Calendar,
+  BookOpen,
+  CheckCircle2,
+  Circle,
   Clock,
   Trophy,
   Loader2,
   Plus,
-  RotateCcw
+  RotateCcw,
+  Trash2,
+  PartyPopper
 } from 'lucide-react'
 
 export default function CurriculumPage({ user, onBack }) {
@@ -54,11 +56,8 @@ export default function CurriculumPage({ user, onBack }) {
   // 進捗情報を取得
   const fetchProgress = async (curriculumId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/progress`);
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      }
+      const data = await api.fetchCurriculumProgress(auth, curriculumId);
+      return data;
     } catch (error) {
       console.error('Error fetching progress:', error);
     }
@@ -68,11 +67,8 @@ export default function CurriculumPage({ user, onBack }) {
   // 統計情報を取得
   const fetchStats = async (curriculumId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      }
+      const data = await api.fetchCurriculumStats(auth, curriculumId);
+      return data;
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -102,25 +98,17 @@ export default function CurriculumPage({ user, onBack }) {
   // 日別タスクの完了状態を更新
   const handleToggleCompletion = async (curriculumId, day, completed) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/progress/${day}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ completed: !completed } ),
-      })
+      await api.updateCurriculumProgress(auth, curriculumId, day, { completed: !completed });
 
-      if (response.ok) {
-        // 選択されたカリキュラムの進捗を更新
-        if (selectedCurriculum && selectedCurriculum.curriculum_id === curriculumId) {
-          const updatedProgress = await fetchProgress(curriculumId)
-          const updatedStats = await fetchStats(curriculumId)
-          setSelectedCurriculum(prev => ({
-            ...prev,
-            progress: updatedProgress,
-            stats: updatedStats
-          }))
-        }
+      // 選択されたカリキュラムの進捗を更新
+      if (selectedCurriculum && selectedCurriculum.curriculum_id === curriculumId) {
+        const updatedProgress = await fetchProgress(curriculumId)
+        const updatedStats = await fetchStats(curriculumId)
+        setSelectedCurriculum(prev => ({
+          ...prev,
+          progress: updatedProgress,
+          stats: updatedStats
+        }))
       }
     } catch (error) {
       console.error('Error updating progress:', error)
@@ -131,13 +119,36 @@ export default function CurriculumPage({ user, onBack }) {
   const handleViewCurriculum = async (curriculum) => {
     const progress = await fetchProgress(curriculum.curriculum_id)
     const stats = await fetchStats(curriculum.curriculum_id)
-    
+
     setSelectedCurriculum({
       ...curriculum,
       progress: progress,
       stats: stats
     })
     setActiveTab('view')
+  }
+
+  // カリキュラム削除
+  const handleDeleteCurriculum = async (curriculumId) => {
+    if (!confirm('このカリキュラムを削除しますか？この操作は取り消せません。')) return;
+
+    try {
+      await api.deleteCurriculum(auth, curriculumId);
+      setCurriculums(prev => prev.filter(c => c.curriculum_id !== curriculumId));
+      if (selectedCurriculum?.curriculum_id === curriculumId) {
+        setSelectedCurriculum(null);
+        setActiveTab('list');
+      }
+    } catch (error) {
+      console.error('Error deleting curriculum:', error);
+      alert('カリキュラムの削除に失敗しました');
+    }
+  }
+
+  // カリキュラム完了
+  const handleCompleteCurriculum = () => {
+    alert('🎉 おめでとうございます！カリキュラムを完了しました！');
+    setActiveTab('list');
   }
 
   const formatDate = (dateString) => {
@@ -268,14 +279,24 @@ export default function CurriculumPage({ user, onBack }) {
                       <div className="text-sm text-foreground/70">
                         作成日: {formatDate(curriculum.created_at)}
                       </div>
-                      <Button
-                        onClick={() => handleViewCurriculum(curriculum)}
-                        variant="outline"
-                        size="sm"
-                        className="text-foreground border hover:bg-accent"
-                      >
-                        詳細を見る
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleViewCurriculum(curriculum)}
+                          variant="outline"
+                          size="sm"
+                          className="text-white border-white/20 hover:bg-white/10"
+                        >
+                          詳細を見る
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteCurriculum(curriculum.curriculum_id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-400 border-red-400/20 hover:bg-red-400/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -288,17 +309,46 @@ export default function CurriculumPage({ user, onBack }) {
         <TabsContent value="view" className="space-y-6">
           {selectedCurriculum && (
             <>
+              {/* 完了通知 */}
+              {selectedCurriculum.stats?.completion_rate === 100 && (
+                <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border-green-400/30">
+                  <CardContent className="p-6 text-center">
+                    <PartyPopper className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
+                    <h3 className="text-xl font-bold text-white mb-2">🎉 カリキュラム完了！</h3>
+                    <p className="text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
+                    <Button
+                      onClick={handleCompleteCurriculum}
+                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold"
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      完了を確認
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* カリキュラム概要 */}
               <Card className="bg-card border border">
                 <CardHeader>
-                  <CardTitle className="text-foreground flex items-center gap-2">
-                    <Target className="w-5 h-5" />
-                    {selectedCurriculum.title}
+                  <CardTitle className="text-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-5 h-5" />
+                      {selectedCurriculum.title}
+                    </div>
+                    <Button
+                      onClick={() => handleDeleteCurriculum(selectedCurriculum.curriculum_id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-400 border-red-400/20 hover:bg-red-400/10"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      削除
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-foreground/90">{selectedCurriculum.overview}</p>
-                  
+
                   {/* 進捗統計 */}
                   {selectedCurriculum.stats && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -347,7 +397,7 @@ export default function CurriculumPage({ user, onBack }) {
                     {selectedCurriculum.curriculum_data.daily_plan?.map((plan) => {
                       const progress = selectedCurriculum.progress?.find(p => p.day === plan.day)
                       const isCompleted = progress?.completed || false
-                      
+
                       return (
                         <AccordionItem key={plan.day} value={`day-${plan.day}`}>
                           <AccordionTrigger className="text-foreground hover:text-foreground/80">
