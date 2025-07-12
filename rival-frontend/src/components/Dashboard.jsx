@@ -13,13 +13,16 @@ import AIFeedback from './AIFeedback'
 import { api } from '../api'
 import { auth } from '../firebase'
 
+const WORK_DURATION = 25 * 60; // 25 minutes in seconds
+const BREAK_DURATION = 5 * 60; // 5 minutes in seconds
+
 export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate()
   const [isStudying, setIsStudying] = useState(false)
   const [studyTime, setStudyTime] = useState(0)
   const [currentFocusScore, setCurrentFocusScore] = useState(75)
   const [interruptionCount, setInterruptionCount] = useState(0)
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60) // 25 minutes
+  const [pomodoroTime, setPomodoroTime] = useState(WORK_DURATION) // 25 minutes
   const [isBreak, setIsBreak] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [aiMessages, setAiMessages] = useState([])
@@ -31,44 +34,47 @@ export default function Dashboard({ user, onLogout }) {
   const pomodoroTimerRef = useRef(null)
 
   useEffect(() => {
-    // 目標サイクルに到達したら自動的に停止
-    if (isStudying && currentCycle > targetCycles) {
-      handleStopStudy();
-      return;
-    }
-
     if (isStudying) {
       studyTimerRef.current = setInterval(() => {
         setStudyTime(prev => prev + 1)
       }, 1000)
 
       pomodoroTimerRef.current = setInterval(() => {
-        setPomodoroTime(prev => {
-          if (prev <= 1) {
+        setPomodoroTime(prevPomodoroTime => {
+          if (prevPomodoroTime <= 1) {
+            // タイマーが0になったら次のサイクルへ
             if (isBreak) {
               // 休憩終了 -> 次の集中時間へ
               setIsBreak(false)
-              setCurrentCycle(prevCycle => prevCycle + 1)
-              return 25 * 60
+              setCurrentCycle(prevCycle => {
+                const nextCycle = prevCycle + 1;
+                // 目標サイクルに到達したら自動的に停止
+                if (nextCycle > targetCycles) {
+                  handleStopStudy();
+                  return prevCycle; // 停止するのでサイクルは進めない
+                }
+                return nextCycle;
+              });
+              return WORK_DURATION;
             } else {
               // 集中終了 -> 休憩へ
-              setIsBreak(true)
-              return 5 * 60
+              setIsBreak(true);
+              return BREAK_DURATION;
             }
           }
-          return prev - 1
-        })
-      }, 1000)
+          return prevPomodoroTime - 1;
+        });
+      }, 1000);
     } else {
-      clearInterval(studyTimerRef.current)
-      clearInterval(pomodoroTimerRef.current)
+      clearInterval(studyTimerRef.current);
+      clearInterval(pomodoroTimerRef.current);
     }
 
     return () => {
-      clearInterval(studyTimerRef.current)
-      clearInterval(pomodoroTimerRef.current)
-    }
-  }, [isStudying, isBreak, currentCycle, targetCycles])
+      clearInterval(studyTimerRef.current);
+      clearInterval(pomodoroTimerRef.current);
+    };
+  }, [isStudying, targetCycles]); // isStudying と targetCycles のみに依存
 
   const handleStartStudy = () => {
     setCurrentCycle(1)
@@ -105,7 +111,7 @@ export default function Dashboard({ user, onLogout }) {
     // Reset counters
     setStudyTime(0);
     setInterruptionCount(0);
-    setPomodoroTime(25 * 60);
+    setPomodoroTime(WORK_DURATION);
     setIsBreak(false);
     setCurrentCycle(1);
   };
@@ -244,7 +250,7 @@ export default function Dashboard({ user, onLogout }) {
                   {isBreak ? '休憩時間' : '集中時間'}
                 </Badge>
                 <Progress
-                  value={isBreak ? ((5 * 60 - pomodoroTime) / (5 * 60)) * 100 : ((25 * 60 - pomodoroTime) / (25 * 60)) * 100}
+                  value={isBreak ? ((BREAK_DURATION - pomodoroTime) / BREAK_DURATION) * 100 : ((WORK_DURATION - pomodoroTime) / WORK_DURATION) * 100}
                   className="w-full"
                 />
                 {isStudying && (
