@@ -23,7 +23,8 @@ import {
   Plus,
   RotateCcw,
   Trash2,
-  PartyPopper
+  PartyPopper,
+  Play
 } from 'lucide-react'
 
 export default function CurriculumPage({ user, onBack }) {
@@ -149,6 +150,21 @@ export default function CurriculumPage({ user, onBack }) {
   const handleCompleteCurriculum = () => {
     alert('🎉 おめでとうございます！カリキュラムを完了しました！');
     setActiveTab('list');
+  }
+
+  // タスク選択
+  const handleSelectTask = (curriculum, plan) => {
+    const selectedTask = {
+      curriculumId: curriculum.curriculum_id,
+      curriculumTitle: curriculum.title,
+      day: plan.day,
+      title: plan.title,
+      objectives: plan.objectives,
+      activities: plan.activities,
+      selectedAt: new Date().toISOString()
+    };
+    localStorage.setItem('selectedTask', JSON.stringify(selectedTask));
+    alert(`第${plan.day}日目のタスクを選択しました: ${plan.title}`);
   }
 
   const formatDate = (dateString) => {
@@ -402,21 +418,36 @@ export default function CurriculumPage({ user, onBack }) {
                         <AccordionItem key={plan.day} value={`day-${plan.day}`}>
                           <AccordionTrigger className="text-white hover:text-white/80">
                             <div className="flex items-center gap-3 w-full">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleToggleCompletion(selectedCurriculum.curriculum_id, plan.day, isCompleted)
-                                }}
-                                className="p-1 h-auto"
-                              >
-                                {isCompleted ? (
-                                  <CheckCircle2 className="w-5 h-5 text-green-400" />
-                                ) : (
-                                  <Circle className="w-5 h-5 text-white/50" />
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleToggleCompletion(selectedCurriculum.curriculum_id, plan.day, isCompleted)
+                                  }}
+                                  className="p-1 h-auto"
+                                >
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                                  ) : (
+                                    <Circle className="w-5 h-5 text-white/50" />
+                                  )}
+                                </Button>
+                                {!isCompleted && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleSelectTask(selectedCurriculum, plan)
+                                    }}
+                                    className="p-1 h-auto text-blue-400 hover:text-blue-300"
+                                  >
+                                    <Play className="w-4 h-4" />
+                                  </Button>
                                 )}
-                              </Button>
+                              </div>
                               <div className="flex-1 text-left">
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">第{plan.day}日目</span>
