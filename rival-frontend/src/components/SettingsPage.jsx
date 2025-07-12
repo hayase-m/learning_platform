@@ -8,10 +8,12 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge } from 'lucide-react'
+import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge, User } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 export default function SettingsPage({ user, onBack }) {
   const [settings, setSettings] = useState({
+    name: '',
     ai_personality: '厳しい',
     notification_audio: true,
     notification_desktop: false,
@@ -30,6 +32,7 @@ export default function SettingsPage({ user, onBack }) {
     try {
       const userData = await api.fetchUserSettings(auth, userId);
       setSettings({
+        name: userData.name || '',
         ai_personality: userData.ai_personality,
         notification_audio: userData.notification_audio,
         notification_desktop: userData.notification_desktop,
@@ -97,6 +100,31 @@ export default function SettingsPage({ user, onBack }) {
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* User Profile Settings */}
+        <Card className="bg-card border">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <User className="w-5 h-5" />
+              ユーザー情報
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-foreground">
+                ユーザー名
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                value={settings.name}
+                onChange={(e) => setSettings(prev => ({ ...prev, name: e.target.value }))}
+                className="bg-input border text-foreground"
+                placeholder="あなたの名前"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* AI Personality Settings */}
         <Card className="bg-card border">
           <CardHeader>

@@ -48,15 +48,17 @@ def create_user():
         # 既に存在する場合は、その情報を返却する（エラーではない）
         return jsonify(existing_user.to_dict()), 200
     
-    # フロントから送られてきたemailを取得
+    # フロントから送られてきたデータを取得
     data = request.json
+    name = data.get('name', 'ユーザー')
     email = data.get('email')
     if not email:
         return jsonify({'error': 'Email is required'}), 400
 
     # 新しいユーザーをDBに作成
     new_user = User(
-        user_id=user_id, # ★トークンから取得したIDを使用
+        user_id=user_id,
+        name=name,
         email=email
     )
     db.session.add(new_user)
@@ -73,6 +75,7 @@ def update_user(user_id):
     user = User.query.filter_by(user_id=user_id).first_or_404()
     data = request.json
     
+    user.name = data.get('name', user.name)
     user.ai_personality = data.get('ai_personality', user.ai_personality)
     user.notification_audio = data.get('notification_audio', user.notification_audio)
     user.notification_desktop = data.get('notification_desktop', user.notification_desktop)
