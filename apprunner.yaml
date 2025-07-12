@@ -1,0 +1,18 @@
+version: 1.0
+runtime: python3
+build:
+  commands:
+    build:
+      - echo "Installing dependencies from root requirements.txt"
+      - pip install -r requirements.txt
+run:
+  runtime-version: 3.11
+  command: cd rival-backend && gunicorn --bind 0.0.0.0:8080 --workers 2 --timeout 120 src.main:app
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: PORT
+      value: "8080"
+    - name: SECRET_KEY
+      value: "your-secret-key-here"
