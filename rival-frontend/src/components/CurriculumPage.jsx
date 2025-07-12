@@ -1,3 +1,5 @@
+import { api } from '../api';
+import { auth } from '../firebase';
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,86 +34,75 @@ export default function CurriculumPage({ user, onBack }) {
     duration_days: 30
   })
 
-  // カリキュラム一覧を取得
-  const fetchCurriculums = async () => {
-    try {
-      const response = await fetch(`http://localhost:5001/api/users/${user.userId}/curriculums` )
-      if (response.ok) {
-        const data = await response.json()
-        setCurriculums(data)
-      }
-    } catch (error) {
-      console.error('Error fetching curriculums:', error)
+  useEffect(() => {
+    // ユーザー情報が利用可能になってからカリキュラムを取得
+    if (user && user.uid) {
+      fetchCurriculums(user.uid);
     }
-  }
+  }, [user]); // userオブジェクトの変更を監視
+
+  // カリキュラム一覧を取得
+  const fetchCurriculums = async (userId) => {
+    try {
+      const data = await api.fetchCurriculums(auth, userId);
+      setCurriculums(data);
+    } catch (error) {
+      console.error('Error fetching curriculums:', error);
+    }
+  };
 
   // 進捗情報を取得
   const fetchProgress = async (curriculumId) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/curriculums/${curriculumId}/progress` )
+      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/progress`);
       if (response.ok) {
-        const data = await response.json()
-        return data
+        const data = await response.json();
+        return data;
       }
     } catch (error) {
-      console.error('Error fetching progress:', error)
+      console.error('Error fetching progress:', error);
     }
-    return []
-  }
+    return [];
+  };
 
   // 統計情報を取得
   const fetchStats = async (curriculumId) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/curriculums/${curriculumId}/stats` )
+      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/stats`);
       if (response.ok) {
-        const data = await response.json()
-        return data
+        const data = await response.json();
+        return data;
       }
     } catch (error) {
-      console.error('Error fetching stats:', error)
+      console.error('Error fetching stats:', error);
     }
-    return null
-  }
-
-  useEffect(() => {
-    fetchCurriculums()
-  }, [user.userId])
+    return null;
+  };
 
   // カリキュラム生成
   const handleCreateCurriculum = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    if (!user || !user.uid) return;
+
+    setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5001/api/users/${user.userId}/curriculums`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData ),
-      })
-
-      if (response.ok) {
-        const newCurriculum = await response.json()
-        setCurriculums(prev => [newCurriculum, ...prev])
-        setFormData({ goal: '', duration_days: 30 })
-        setActiveTab('list')
-      } else {
-        const error = await response.json()
-        alert(`エラー: ${error.error}`)
-      }
+      const newCurriculum = await api.createCurriculum(auth, user.uid, formData);
+      setCurriculums(prev => [newCurriculum, ...prev]);
+      setFormData({ goal: '', duration_days: 30 });
+      setActiveTab('list');
     } catch (error) {
-      console.error('Error creating curriculum:', error)
-      alert('カリキュラムの生成に失敗しました')
+      console.error('Error creating curriculum:', error);
+      alert(`カリキュラムの生成に失敗しました: ${error.message}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   // 日別タスクの完了状態を更新
   const handleToggleCompletion = async (curriculumId, day, completed) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/curriculums/${curriculumId}/progress/${day}`, {
+      const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}/progress/${day}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

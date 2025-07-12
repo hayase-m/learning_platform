@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '../api';
 import { auth } from '../firebase' // Firebase初期化ファイルをインポート
 import { 
   createUserWithEmailAndPassword, 
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { API_BASE_URL } from '../config'
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('') // パスワード用のstateを追加
   const [isLogin, setIsLogin] = useState(true)
@@ -35,17 +36,9 @@ export default function LoginPage({ onLogin }) {
 
       // バックエンドに初回ログインを通知し、ユーザーDBに登録する
       // 既に存在する場合はバックエンド側で何もしない想定
-      await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}` // ★ヘッダーにトークンを付与
-        },
-        body: JSON.stringify({ email: user.email }),
-      });
+      await api.createUser(auth, user.uid, user.email);
 
-      // 親コンポーネントにユーザー情報とトークンを渡してログイン完了
-      onLogin({ user, idToken });
+      // ログイン/登録が成功すると、App.jsxのonAuthStateChangedが検知して自動的にダッシュボードに遷移する
 
     } catch (firebaseError) {
       // Firebaseからのエラーをキャッチして表示
