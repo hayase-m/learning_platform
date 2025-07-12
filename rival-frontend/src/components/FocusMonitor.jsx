@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Camera, CameraOff, AlertTriangle } from 'lucide-react'
+import axios from 'axios';
 
 export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   const videoRef = useRef(null)
@@ -11,9 +12,11 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   const [isLoading, setIsLoading] = useState(false)
   const [detectionData, setDetectionData] = useState({
     faceDetected: false,
-    eyesOpen: true,
-    lookingAtScreen: true,
-    posture: 'good'
+    confidence: 0,
+    focusScore: 0,
+    elapsedTime: 0,
+    totalDetections: 0,
+    presentDetections: 0
   })
 
   useEffect(() => {
@@ -48,7 +51,6 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
         videoRef.current.play()
       }
       
-      // Start focus detection simulation
       startFocusDetection()
       
     } catch (err) {
@@ -70,39 +72,43 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
     }
   }
 
+  const captureFrame = () => {
+    if (!videoRef.current || !canvasRef.current) return null;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg');
+  }
+
   const startFocusDetection = () => {
-    // Simulate focus detection with random variations
-    const detectFocus = () => {
-      if (!enabled) return
-      
-      // Simulate realistic focus score variations
-      const baseScore = 70 + Math.random() * 20 // 70-90 base range
-      const variation = (Math.random() - 0.5) * 30 // ±15 variation
-      const focusScore = Math.max(0, Math.min(100, Math.round(baseScore + variation)))
-      
-      // Simulate detection data
-      const newDetectionData = {
-        faceDetected: Math.random() > 0.1, // 90% face detection rate
-        eyesOpen: Math.random() > 0.05, // 95% eyes open
-        lookingAtScreen: Math.random() > 0.2, // 80% looking at screen
-        posture: Math.random() > 0.3 ? 'good' : 'poor' // 70% good posture
+    const detectFocus = async () => {
+      if (!enabled) return;
+
+      const image = captureFrame();
+      if (image) {
+        try {
+          const response = await axios.post('/api/concentration/detect', { image });
+          const data = response.data;
+          setDetectionData(data);
+          onFocusScoreUpdate(data.focusScore || 0);
+          setError(null);
+        } catch (error) {
+          console.error('Error detecting face:', error);
+          const errorMessage = error.response?.data?.error || 'サーバーとの通信に失敗しました。';
+          setError(errorMessage);
+          setDetectionData({ faceDetected: false, confidence: 0, focusScore: 0, elapsedTime: 0, totalDetections: 0, presentDetections: 0 });
+          onFocusScoreUpdate(0);
+        }
       }
       
-      setDetectionData(newDetectionData)
-      
-      // Calculate focus score based on detection data
-      let adjustedScore = focusScore
-      if (!newDetectionData.faceDetected) adjustedScore *= 0.3
-      if (!newDetectionData.eyesOpen) adjustedScore *= 0.2
-      if (!newDetectionData.lookingAtScreen) adjustedScore *= 0.6
-      if (newDetectionData.posture === 'poor') adjustedScore *= 0.8
-      
-      onFocusScoreUpdate(Math.round(adjustedScore))
-      
-      setTimeout(detectFocus, 2000) // Update every 2 seconds
+      setTimeout(detectFocus, 2000); // 2秒ごとに検出
     }
     
-    detectFocus()
+    detectFocus();
   }
 
   if (!enabled) {
@@ -170,22 +176,15 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           <div className={`p-2 rounded ${detectionData.faceDetected ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
             顔検出: {detectionData.faceDetected ? '✓' : '✗'}
           </div>
-          <div className={`p-2 rounded ${detectionData.eyesOpen ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-            目の状態: {detectionData.eyesOpen ? '開いている' : '閉じている'}
-          </div>
-          <div className={`p-2 rounded ${detectionData.lookingAtScreen ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-            視線: {detectionData.lookingAtScreen ? '画面を見ている' : '逸れている'}
-          </div>
-          <div className={`p-2 rounded ${detectionData.posture === 'good' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
-            姿勢: {detectionData.posture === 'good' ? '良好' : '要改善'}
+          <div className={`p-2 rounded bg-blue-500/20 text-blue-300`}>
+            集中スコア: {detectionData.focusScore}%
           </div>
         </div>
         
         <div className="text-xs text-slate-400 text-center">
-          ※ 映像はサーバーに送信されず、ブラウザ内で処理されます
+          集中スコア = 在席時間 / 総測定時間 × 100%
         </div>
       </CardContent>
     </Card>
   )
 }
-
