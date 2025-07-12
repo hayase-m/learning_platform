@@ -13,6 +13,7 @@ from flask_cors import CORS
 from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.curriculum import curriculum_bp
+from src.routes.concentration import concentration_bp
 
 import firebase_admin
 from firebase_admin import credentials
@@ -64,6 +65,7 @@ with app.app_context():
 # --- Blueprints ---
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(curriculum_bp, url_prefix='/api')
+app.register_blueprint(concentration_bp, url_prefix='/api/concentration')
 
 
 # --- 実行 ---
