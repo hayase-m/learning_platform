@@ -63,3 +63,26 @@ class DailyReport(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+class DailyReportComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.String(128), unique=True, nullable=False)
+    user_id = db.Column(db.String(128), nullable=False)
+    date = db.Column(db.String(10), nullable=False)  # YYYY-MM-DD format
+    comment_text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<DailyReportComment {self.comment_id}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'comment_id': self.comment_id,
+            'user_id': self.user_id,
+            'date': self.date,
+            'comment_text': self.comment_text,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
