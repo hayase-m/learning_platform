@@ -9,8 +9,9 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
-export default function SettingsPage({ user, onBack }) {
+export default function SettingsPage({ user }) {
   const [settings, setSettings] = useState({
     ai_personality: '厳しい',
     notification_audio: true,
@@ -80,25 +81,11 @@ export default function SettingsPage({ user, onBack }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="text-foreground border hover:bg-card"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          ダッシュボードに戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">
-          設定
-        </h1>
-      </div>
+
 
       <div className="max-w-2xl mx-auto space-y-6">
         {/* AI Personality Settings */}
-        <Card className="bg-card border">
+        <Card className="bg-card border dark:border-white">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Brain className="w-5 h-5" />
@@ -137,7 +124,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Notification Settings */}
-        <Card className="bg-card border">
+        <Card className="bg-card border dark:border-white">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Bell className="w-5 h-5" />
@@ -180,7 +167,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Focus Threshold Settings */}
-        <Card className="bg-card border">
+        <Card className="bg-card border dark:border-white">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Gauge className="w-5 h-5" />
@@ -223,7 +210,7 @@ export default function SettingsPage({ user, onBack }) {
         </Card>
 
         {/* Privacy Information */}
-        <Card className="bg-card border">
+        <Card className="bg-card border dark:border-white">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Settings className="w-5 h-5" />
@@ -254,7 +241,7 @@ export default function SettingsPage({ user, onBack }) {
           <Button
             onClick={saveSettings}
             disabled={saving}
-            className="bg-primary hover:bg-primary/90 text-foreground px-8"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
           >
             {saving ? '保存中...' : '設定を保存'}
           </Button>

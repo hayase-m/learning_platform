@@ -10,7 +10,7 @@ export default function ThemeToggle() {
       variant="outline"
       size="sm"
       onClick={toggleTheme}
-      className="text-foreground border hover:bg-accent"
+      className="text-foreground border hover:bg-accent dark:border-white"
     >
       {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
     </Button>
