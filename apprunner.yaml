@@ -1,7 +1,7 @@
 version: 1.0
 build:
-  commands:
-    build: []
+  image:
+    dockerfile: Dockerfile
 run:
   command: gunicorn -w 4 -b 0.0.0.0:8080 rival-backend.src.main:app
   network:
