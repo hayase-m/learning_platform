@@ -448,6 +448,16 @@ export default function Dashboard({ user, onLogout }) {
             </Card>
           )}
 
+
+        </div>
+
+        {/* Center - Camera Feed */}
+        <div className="space-y-6">
+          <FocusMonitor
+            enabled={cameraEnabled}
+            onFocusScoreUpdate={handleFocusScoreUpdate}
+          />
+          
           {/* Real-time Stats */}
           <Card className="bg-card border">
             <CardHeader>
@@ -464,14 +474,6 @@ export default function Dashboard({ user, onLogout }) {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Center - Camera Feed */}
-        <div>
-          <FocusMonitor
-            enabled={cameraEnabled}
-            onFocusScoreUpdate={handleFocusScoreUpdate}
-          />
         </div>
 
         {/* Right Sidebar - Learning Activities */}
