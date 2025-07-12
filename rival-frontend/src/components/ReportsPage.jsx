@@ -1,3 +1,5 @@
+import { api } from '../api';
+import { auth } from '../firebase';
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,50 +15,39 @@ export default function ReportsPage({ user, onBack }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchReport(selectedDate)
-  }, [selectedDate])
+    if (user && user.uid) {
+      fetchReport(selectedDate, user.uid);
+    }
+  }, [selectedDate, user]);
 
-  const fetchReport = async (date) => {
-    setLoading(true)
-    const dateString = date.toISOString().split('T')[0]
+  const fetchReport = async (date, userId) => {
+    setLoading(true);
+    const dateString = date.toISOString().split('T')[0];
     
     try {
-      const response = await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}/reports/${dateString}`)
-      
-      if (response.ok) {
-        const data = await response.json()
-        setReportData(data)
-        setUserNotes(data.user_notes || '')
-      } else {
-        setReportData(null)
-        setUserNotes('')
-      }
+      const data = await api.fetchUserReports(auth, userId, dateString);
+      setReportData(data);
+      setUserNotes(data.user_notes || '');
     } catch (error) {
-      console.error('Error fetching report:', error)
-      setReportData(null)
-      setUserNotes('')
+      console.error('Error fetching report:', error);
+      setReportData(null);
+      setUserNotes('');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const saveUserNotes = async () => {
     if (!reportData) return
     
     try {
-      const dateString = selectedDate.toISOString().split('T')[0]
-      await fetch(`https://g8h3ilc79pek.manus.space/api/users/${user.userId}/reports/${dateString}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...reportData,
-          user_notes: userNotes
-        }),
-      })
+      const dateString = selectedDate.toISOString().split('T')[0];
+      await api.updateDailyReport(auth, user.uid, dateString, {
+        ...reportData,
+        user_notes: userNotes,
+      });
     } catch (error) {
-      console.error('Error saving notes:', error)
+      console.error('Error saving notes:', error);
     }
   }
 
