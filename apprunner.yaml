@@ -1,10 +1,11 @@
 version: 1.0
-runtime: python3.11
+runtime: python3
 build:
   commands:
     build:
       - pip install -r requirements.txt
 run:
+  runtime-version: "3.11"
   command: python -m gunicorn --chdir rival-backend -w 4 -k uvicorn.workers.UvicornWorker "src.main:app" --bind "0.0.0.0:8080"
   network:
     port: 8080
