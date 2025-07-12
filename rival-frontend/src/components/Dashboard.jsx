@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat, Clock } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
+import ThemeToggle from './ThemeToggle'
 import { api } from '../api'
 import { auth } from '../firebase'
 
@@ -17,6 +18,7 @@ const BREAK_DURATION = 5 * 60; // 5 minutes in seconds
 
 export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate()
+  const [showStartMenu, setShowStartMenu] = useState(!sessionStorage.getItem('hasSeenIntro'))
   const [isStudying, setIsStudying] = useState(false)
   const [studyTime, setStudyTime] = useState(0)
   const [currentFocusScore, setCurrentFocusScore] = useState(75)
@@ -24,7 +26,7 @@ export default function Dashboard({ user, onLogout }) {
   const [pomodoroTime, setPomodoroTime] = useState(WORK_DURATION) // 25 minutes
   const [isBreak, setIsBreak] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
-  
+
   const [targetCycles, setTargetCycles] = useState(4)
   const [currentCycle, setCurrentCycle] = useState(1)
   const [selectedTask, setSelectedTask] = useState(null)
@@ -112,12 +114,12 @@ export default function Dashboard({ user, onLogout }) {
         });
         setPomodoroTime(WORK_DURATION);
       } else {
-      // 集中終了 -> 休憩へ
-      setIsBreak(true);
-      setPomodoroTime(BREAK_DURATION);
+        // 集中終了 -> 休憩へ
+        setIsBreak(true);
+        setPomodoroTime(BREAK_DURATION);
+      }
     }
-  }
-}, [pomodoroTime, isStudying, isBreak, currentCycle, targetCycles, handleStopStudy]);
+  }, [pomodoroTime, isStudying, isBreak, currentCycle, targetCycles, handleStopStudy]);
 
   useEffect(() => {
     if (isStudying) {
@@ -168,19 +170,60 @@ export default function Dashboard({ user, onLogout }) {
   const pomodoroMinutes = Math.floor(pomodoroTime / 60)
   const pomodoroSeconds = pomodoroTime % 60
 
+  useEffect(() => {
+    const hasSeenIntro = sessionStorage.getItem('hasSeenIntro')
+    if (hasSeenIntro) {
+      setShowStartMenu(false)
+    } else {
+      const timer = setTimeout(() => {
+        setShowStartMenu(false)
+        sessionStorage.setItem('hasSeenIntro', 'true')
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  if (showStartMenu) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-foreground mb-4 opacity-0 animate-[fadeInUp_1s_ease-out_forwards]">
+            AI Study Buddy <span className="text-primary">"Rival"</span>
+          </h1>
+          <p className="text-2xl text-muted-foreground opacity-0 animate-[fadeInUp_1s_ease-out_0.5s_forwards]">
+            バトルの準備をしています...
+          </p>
+        </div>
+        <style jsx>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          AI Study Buddy <span className="text-purple-400">"Rival"</span>
+        <h1 className="text-2xl font-bold text-foreground">
+          AI Study Buddy <span className="text-primary">"Rival"</span>
         </h1>
         <div className="flex gap-2">
+          <ThemeToggle />
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/curriculum')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <BookOpen className="w-4 h-4 mr-2" />
             カリキュラム
@@ -189,7 +232,7 @@ export default function Dashboard({ user, onLogout }) {
             variant="outline"
             size="sm"
             onClick={() => navigate('/reports')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             レポート
@@ -198,7 +241,7 @@ export default function Dashboard({ user, onLogout }) {
             variant="outline"
             size="sm"
             onClick={() => navigate('/settings')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-card-foreground border hover:bg-card"
           >
             <Settings className="w-4 h-4 mr-2" />
             設定
@@ -206,8 +249,11 @@ export default function Dashboard({ user, onLogout }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={onLogout}
-            className="text-white border-white/20 hover:bg-white/10"
+            onClick={() => {
+              sessionStorage.removeItem('hasSeenIntro')
+              onLogout()
+            }}
+            className="text-destructive border-destructive hover:bg-card"
           >
             ログアウト
           </Button>
@@ -218,35 +264,52 @@ export default function Dashboard({ user, onLogout }) {
         {/* Left Sidebar - Controls and Stats */}
         <div className="space-y-6">
           {/* Study Controls */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-card-foreground flex items-center gap-2">
                 {cameraEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                 学習コントロール
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {!isStudying && (
-                <div className="space-y-2">
-                  <Label htmlFor="cycles" className="text-white flex items-center gap-2">
+                <div className="space-y-3">
+                  <Label htmlFor="cycles" className="text-card-foreground flex items-center gap-2 font-medium">
                     <Repeat className="w-4 h-4" />
-                    サイクル数
+                    目標サイクル数
                   </Label>
-                  <Input
-                    id="cycles"
-                    type="number"
-                    value={targetCycles}
-                    onChange={(e) => setTargetCycles(Math.max(parseInt(e.target.value, 10) || 1, 1))}
-                    min="1"
-                    className="bg-white/10 border-white/20 text-white"
-                    disabled={isStudying}
-                  />
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTargetCycles(Math.max(targetCycles - 1, 1))}
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
+                      disabled={targetCycles <= 1}
+                    >
+                      -
+                    </Button>
+                    <div className="flex-1 text-center">
+                      <div className="text-2xl text-foreground font-mono">{targetCycles}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{targetCycles * 25}分 + 休憩</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTargetCycles(Math.min(targetCycles + 1, 16))}
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
+                      disabled={targetCycles >= 16}
+                    >
+                      +
+                    </Button>
+                  </div>
                 </div>
               )}
               {!isStudying ? (
                 <Button
                   onClick={handleStartStudy}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-card-foreground"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   学習開始
@@ -254,7 +317,7 @@ export default function Dashboard({ user, onLogout }) {
               ) : (
                 <Button
                   onClick={handleStopStudy}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-red-700 text-card-foreground"
                 >
                   <Square className="w-4 h-4 mr-2" />
                   学習終了
@@ -264,15 +327,15 @@ export default function Dashboard({ user, onLogout }) {
           </Card>
 
           {/* Pomodoro Timer */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">
+              <CardTitle className="text-card-foreground">
                 学習タイマー
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-3xl font-mono text-white mb-2">
+                <div className="text-3xl font-mono text-foreground mb-2">
                   {pomodoroMinutes}:{pomodoroSeconds.toString().padStart(2, '0')}
                 </div>
                 <Badge variant={isBreak ? "secondary" : "default"} className="mb-4">
@@ -283,7 +346,7 @@ export default function Dashboard({ user, onLogout }) {
                   className="w-full"
                 />
                 {isStudying && (
-                  <div className="text-sm text-white/70 mt-2">
+                  <div className="text-sm text-card-foreground/70 mt-2 font-mono">
                     サイクル: {currentCycle} / {targetCycles}
                   </div>
                 )}
@@ -292,13 +355,13 @@ export default function Dashboard({ user, onLogout }) {
           </Card>
 
           {/* Focus Score */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">集中スコア</CardTitle>
+              <CardTitle className="text-card-foreground">集中スコア</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-4xl font-bold text-white mb-2">
+                <div className="text-4xl text-foreground mb-2 font-mono">
                   {currentFocusScore}
                 </div>
                 <Progress value={currentFocusScore} className="w-full mb-2" />
@@ -313,32 +376,36 @@ export default function Dashboard({ user, onLogout }) {
 
           {/* Selected Task */}
           {selectedTask && (
-            <Card className="bg-blue-500/20 backdrop-blur-md border-blue-400/30">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
+            <Card className="bg-gradient-to-br from-primary/20 to-primary/10 border-primary/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-card-foreground flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
                   選択中のタスク
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-white">
-                  <div className="font-medium">第{selectedTask.day}日目: {selectedTask.title}</div>
-                  <div className="text-sm text-white/70 mt-1">{selectedTask.curriculumTitle}</div>
+              <CardContent className="space-y-4">
+                <div className="bg-card/50 p-3 rounded-lg">
+                  <div className="font-semibold text-foreground text-lg">第{selectedTask.day}日目</div>
+                  <div className="text-foreground font-medium">{selectedTask.title}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{selectedTask.curriculumTitle}</div>
                 </div>
                 {selectedTask.objectives && (
-                  <div>
-                    <div className="text-sm font-medium text-white mb-1">今日の目標:</div>
-                    <ul className="text-sm text-white/80 space-y-1">
+                  <div className="bg-card/30 p-3 rounded-lg">
+                    <div className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-primary rounded-full"></span>
+                      今日の目標
+                    </div>
+                    <ul className="text-sm text-card-foreground space-y-1.5">
                       {selectedTask.objectives.slice(0, 2).map((obj, idx) => (
-                        <li key={idx} className="flex items-start gap-1">
-                          <span className="text-blue-400">•</span>
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-primary mt-1">▸</span>
                           <span>{obj}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Button
                     onClick={async () => {
                       try {
@@ -351,10 +418,10 @@ export default function Dashboard({ user, onLogout }) {
                         alert('タスクの完了に失敗しました');
                       }
                     }}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
                     size="sm"
                   >
-                    完了
+                    ✓ 完了
                   </Button>
                   <Button
                     onClick={() => {
@@ -363,7 +430,7 @@ export default function Dashboard({ user, onLogout }) {
                     }}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-white border-white/20 hover:bg-white/10"
+                    className="flex-1"
                   >
                     クリア
                   </Button>
@@ -373,16 +440,16 @@ export default function Dashboard({ user, onLogout }) {
           )}
 
           {/* Real-time Stats */}
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white">リアルタイム統計</CardTitle>
+              <CardTitle className="text-card-foreground">リアルタイム統計</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-foreground">
                 <span>総学習時間:</span>
                 <span className="font-mono">{formatTime(studyTime)}</span>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-card-foreground">
                 <span>中断回数:</span>
                 <span className="font-mono">{interruptionCount}</span>
               </div>
@@ -401,41 +468,41 @@ export default function Dashboard({ user, onLogout }) {
         {/* Right Sidebar - Learning Activities */}
         <div>
           {selectedTask ? (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="text-card-foreground flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
                   学習活動チェックリスト
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-sm text-white/70 mb-4">
+                <div className="text-sm text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
                   第{selectedTask.day}日目: {selectedTask.title}
                 </div>
                 {selectedTask.activities?.map((activity, index) => {
                   const checkKey = `${selectedTask.curriculumId}-${selectedTask.day}-${index}`;
                   const isChecked = activityChecklist[checkKey] || false;
-                  
+
                   return (
-                    <div key={index} className="bg-white/5 p-3 rounded-lg space-y-2">
+                    <div key={index} className="bg-muted/30 p-3 rounded-lg border">
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => handleActivityCheck(index, e.target.checked)}
-                          className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                          className="mt-1 w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4" />
-                            <span className={`font-medium ${isChecked ? 'line-through text-white/50' : 'text-white'}`}>
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <span className={`font-medium ${isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                               {activity.title}
                             </span>
                             <Badge variant="secondary" className="text-xs">
                               {activity.duration_minutes}分
                             </Badge>
                           </div>
-                          <p className={`text-sm ${isChecked ? 'line-through text-white/30' : 'text-white/70'}`}>
+                          <p className={`text-sm ${isChecked ? 'line-through text-muted-foreground/70' : 'text-muted-foreground'}`}>
                             {activity.description}
                           </p>
                         </div>
@@ -450,15 +517,15 @@ export default function Dashboard({ user, onLogout }) {
                   }).length;
                   const totalCount = selectedTask.activities.length;
                   const isAllCompleted = completedCount === totalCount;
-                  
+
                   return (
-                    <div className="pt-2 border-t border-white/10 space-y-3">
-                      <div className="text-sm text-white/70">
+                    <div className="pt-2 border-t border-border space-y-3">
+                      <div className="text-sm text-muted-foreground">
                         進捗: {completedCount} / {totalCount}
                       </div>
-                      <Progress 
-                        value={(completedCount / totalCount) * 100} 
-                        className="w-full" 
+                      <Progress
+                        value={(completedCount / totalCount) * 100}
+                        className="w-full"
                       />
                       {isAllCompleted && (
                         <Button
@@ -480,7 +547,7 @@ export default function Dashboard({ user, onLogout }) {
                               alert('タスクの完了に失敗しました');
                             }
                           }}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          className="w-full bg-green-600 hover:bg-green-700"
                           size="sm"
                         >
                           🎉 全ての活動を完了！
@@ -492,11 +559,11 @@ export default function Dashboard({ user, onLogout }) {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-card border">
               <CardContent className="p-6 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-white/50" />
-                <p className="text-white/70">タスクが選択されていません</p>
-                <p className="text-white/50 text-sm">カリキュラムからタスクを選択してください</p>
+                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">タスクが選択されていません</p>
+                <p className="text-muted-foreground/70 text-sm">カリキュラムからタスクを選択してください</p>
               </CardContent>
             </Card>
           )}

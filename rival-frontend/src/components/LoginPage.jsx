@@ -48,23 +48,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            AI Study Buddy <span className="text-purple-400">"Rival"</span>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            AI Study Buddy <span className="text-primary">"Rival"</span>
           </h1>
-          <p className="text-slate-300">
+          <p className="text-muted-foreground">
             あなたの学習を見守る、厳しくも頼れるライバル
           </p>
         </div>
         
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">
+            <CardTitle className="text-card-foreground">
               {isLogin ? 'ログイン' : '新規登録'}
             </CardTitle>
-            <CardDescription className="text-slate-300">
+            <CardDescription className="text-muted-foreground">
               {isLogin 
                 ? 'メールアドレスとパスワードでログイン' 
                 : 'アカウントを作成してください'
@@ -74,7 +74,7 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">
+                <Label htmlFor="email" className="text-foreground">
                   メールアドレス
                 </Label>
                 <Input
@@ -83,14 +83,14 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400"
+                  className="bg-input border text-foreground"
                   placeholder="your@email.com"
                 />
               </div>
 
               {/* パスワード入力欄を追加 */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white">
+                <Label htmlFor="password" className="text-foreground">
                   パスワード
                 </Label>
                 <Input
@@ -99,17 +99,17 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-white/10 border-white/20 text-white"
+                  className="bg-input border text-foreground"
                   placeholder="6文字以上"
                 />
               </div>
               
               {/* エラーメッセージ表示欄 */}
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {error && <p className="text-destructive text-sm">{error}</p>}
               
               <Button 
                 type="submit" 
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isLogin ? 'ログイン' : '登録してログイン'}
               </Button>
@@ -122,7 +122,7 @@ export default function LoginPage() {
                   setIsLogin(!isLogin)
                   setError(null) // モード切替時にエラーをリセット
                 }}
-                className="text-purple-400 hover:text-purple-300 text-sm"
+                className="text-primary hover:text-primary/80 text-sm"
               >
                 {isLogin 
                   ? '新規登録はこちら' 
