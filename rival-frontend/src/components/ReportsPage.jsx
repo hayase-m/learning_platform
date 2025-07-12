@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 
 export default function ReportsPage({ user, onBack }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [reportData, setReportData] = useState(null)
-  const [userNotes, setUserNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [comments, setComments] = useState([])
+  const [newComment, setNewComment] = useState('')
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -22,70 +23,60 @@ export default function ReportsPage({ user, onBack }) {
 
   useEffect(() => {
     const userId = user?.uid || 'sample_user_123';
-    const dateKey = formatDate(selectedDate);
-    console.log('Date changed to:', dateKey);
     fetchReport(selectedDate, userId);
   }, [selectedDate, user]);
 
   const fetchReport = async (date, userId) => {
     setLoading(true);
     const dateString = formatDate(date);
-    console.log('Fetching report for date:', dateString, 'userId:', userId);
     
-    // 状態をリセット
     setReportData(null);
-    setUserNotes('');
+    setComments([]);
     
     try {
       const data = await api.fetchUserReports(auth, userId, dateString);
-      console.log('API response:', data);
       if (data) {
-        console.log('Setting report data:', data);
         setReportData(data);
-        setUserNotes(data.user_notes || '');
-      } else {
-        console.log('No data found for date:', dateString);
-        setReportData(null);
-        setUserNotes('');
       }
+      
+      const commentsData = await api.fetchDailyComments(auth, userId, dateString);
+      setComments(commentsData || []);
     } catch (error) {
-      console.error('Error fetching report:', error);
+      console.error('Error fetching data:', error);
       setReportData(null);
-      setUserNotes('');
+      setComments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const saveUserNotes = async () => {
+  const addComment = async () => {
+    if (!newComment.trim()) return;
+    
     try {
-      const dateString = formatDate(selectedDate);
       const userId = user?.uid || 'sample_user_123';
-      
-      if (reportData) {
-        await api.updateDailyReport(auth, userId, dateString, {
-          ...reportData,
-          user_notes: userNotes,
-        });
-      } else {
-        const newReport = {
-          date: dateString,
-          total_study_time: 0,
-          total_focus_time: 0,
-          avg_focus_score: 0,
-          interruption_count: 0,
-          ai_summary: '',
-          user_notes: userNotes
-        };
-        await api.saveDailyReport(auth, userId, newReport);
-        setReportData(newReport);
-      }
-      alert('メモを保存しました！');
+      const dateString = formatDate(selectedDate);
+      const comment = await api.createComment(auth, userId, {
+        date: dateString,
+        comment_text: newComment
+      });
+      setComments([comment, ...comments]);
+      setNewComment('');
     } catch (error) {
-      console.error('Error saving notes:', error);
-      alert('メモの保存に失敗しました。');
+      console.error('Error adding comment:', error);
+      alert('コメントの追加に失敗しました。');
     }
-  }
+  };
+
+  const deleteComment = async (commentId) => {
+    try {
+      await api.deleteComment(auth, commentId);
+      setComments(comments.filter(c => c.comment_id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('コメントの削除に失敗しました。');
+    }
+  };
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
@@ -126,7 +117,6 @@ export default function ReportsPage({ user, onBack }) {
             <CardContent>
               <Calendar
                 mode="single"
-                disableUnselect
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(new Date(date))}
                 className="text-card-foreground"
@@ -204,21 +194,43 @@ export default function ReportsPage({ user, onBack }) {
 
               <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
+                  <CardTitle className="text-card-foreground">コメント</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    value={userNotes}
-                    onChange={(e) => setUserNotes(e.target.value)}
-                    placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
-                  />
-                  <Button
-                    onClick={saveUserNotes}
-                    className="bg-primary hover:bg-primary/90 text-card-foreground"
-                  >
-                    メモを保存
-                  </Button>
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="コメントを追加..."
+                      className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-16"
+                    />
+                    <Button
+                      onClick={addComment}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div key={comment.comment_id} className="bg-muted/30 p-3 rounded-lg flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-card-foreground">{comment.comment_text}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(comment.created_at).toLocaleString('ja-JP')}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => deleteComment(comment.comment_id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </>
@@ -234,24 +246,46 @@ export default function ReportsPage({ user, onBack }) {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
+                  <CardTitle className="text-card-foreground">コメント</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    value={userNotes}
-                    onChange={(e) => setUserNotes(e.target.value)}
-                    placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
-                  />
-                  <Button
-                    onClick={saveUserNotes}
-                    className="bg-primary hover:bg-primary/90 text-card-foreground"
-                  >
-                    メモを保存
-                  </Button>
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="コメントを追加..."
+                      className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-16"
+                    />
+                    <Button
+                      onClick={addComment}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div key={comment.comment_id} className="bg-muted/30 p-3 rounded-lg flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-card-foreground">{comment.comment_text}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(comment.created_at).toLocaleString('ja-JP')}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => deleteComment(comment.comment_id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </>

@@ -167,4 +167,37 @@ export const api = {
         if (!response.ok) throw new Error('Failed to delete curriculum');
         return response.status === 204 ? {} : response.json();
     },
+
+    async fetchDailyComments(auth, userId, dateString) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/comments/${dateString}`, {
+            headers: headers
+        });
+        if (!response.ok) throw new Error('Failed to fetch comments');
+        return response.json();
+    },
+
+    async createComment(auth, userId, data) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to create comment');
+        return response.json();
+    },
+
+    async deleteComment(auth, commentId) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+        if (!response.ok) throw new Error('Failed to delete comment');
+        return response.status === 204 ? {} : response.json();
+    },
 };

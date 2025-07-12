@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from src.models.user import User, DailyReport, db
+from src.models.user import User, DailyReport, DailyReportComment, db
 import uuid
 import json
 import random
@@ -286,3 +286,29 @@ def generate_ai_summary():
             summary += f"中断回数{interruption_count}回と少なく、とても集中できていました。素晴らしい一日でしたね！"
     
     return jsonify({'summary': summary})
+
+# Comment endpoints
+@user_bp.route('/users/<string:user_id>/comments/<string:date>', methods=['GET'])
+def get_daily_comments(user_id, date):
+    comments = DailyReportComment.query.filter_by(user_id=user_id, date=date).order_by(DailyReportComment.created_at.desc()).all()
+    return jsonify([comment.to_dict() for comment in comments])
+
+@user_bp.route('/users/<string:user_id>/comments', methods=['POST'])
+def create_comment(user_id):
+    data = request.json
+    comment = DailyReportComment(
+        comment_id=str(uuid.uuid4()),
+        user_id=user_id,
+        date=data['date'],
+        comment_text=data['comment_text']
+    )
+    db.session.add(comment)
+    db.session.commit()
+    return jsonify(comment.to_dict()), 201
+
+@user_bp.route('/comments/<string:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    comment = DailyReportComment.query.filter_by(comment_id=comment_id).first_or_404()
+    db.session.delete(comment)
+    db.session.commit()
+    return '', 204
