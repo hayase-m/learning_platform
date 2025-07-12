@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function ReportsPage({ user, onBack }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -15,19 +14,26 @@ export default function ReportsPage({ user, onBack }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (user && user.uid) {
-      fetchReport(selectedDate, user.uid);
-    }
+    const userId = user?.uid || 'sample_user_123';
+    fetchReport(selectedDate, userId);
   }, [selectedDate, user]);
 
   const fetchReport = async (date, userId) => {
     setLoading(true);
     const dateString = date.toISOString().split('T')[0];
+    console.log('Fetching report for:', dateString, 'userId:', userId);
     
     try {
       const data = await api.fetchUserReports(auth, userId, dateString);
-      setReportData(data);
-      setUserNotes(data.user_notes || '');
+      console.log('Report data received:', data);
+      if (data) {
+        setReportData(data);
+        setUserNotes(data.user_notes || '');
+      } else {
+        console.log('No report data found for date:', dateString);
+        setReportData(null);
+        setUserNotes('');
+      }
     } catch (error) {
       console.error('Error fetching report:', error);
       setReportData(null);
@@ -42,7 +48,8 @@ export default function ReportsPage({ user, onBack }) {
     
     try {
       const dateString = selectedDate.toISOString().split('T')[0];
-      await api.updateDailyReport(auth, user.uid, dateString, {
+      const userId = user?.uid || 'sample_user_123';
+      await api.updateDailyReport(auth, userId, dateString, {
         ...reportData,
         user_notes: userNotes,
       });
@@ -61,17 +68,7 @@ export default function ReportsPage({ user, onBack }) {
     return `${minutes}分`
   }
 
-  const generateMockTimeSeriesData = () => {
-    // Generate mock time series data for demonstration
-    const data = []
-    for (let hour = 9; hour <= 21; hour++) {
-      data.push({
-        time: `${hour}:00`,
-        score: Math.floor(Math.random() * 40) + 60 // 60-100 range
-      })
-    }
-    return data
-  }
+
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -105,7 +102,11 @@ export default function ReportsPage({ user, onBack }) {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                }}
                 className="text-card-foreground"
                 classNames={{
                   day_selected: "bg-purple-600 text-card-foreground",
@@ -168,46 +169,7 @@ export default function ReportsPage({ user, onBack }) {
                 </Card>
               </div>
 
-              {/* Focus Score Chart */}
-              <Card className="bg-card border">
-                <CardHeader>
-                  <CardTitle className="text-card-foreground">時間帯別集中度推移</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={generateMockTimeSeriesData()}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="time" 
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                        />
-                        <YAxis 
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                          domain={[0, 100]}
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: '#1F2937',
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#8B5CF6" 
-                          strokeWidth={2}
-                          dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* AI Summary */}
               <Card className="bg-card border">

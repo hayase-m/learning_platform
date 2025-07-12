@@ -96,10 +96,16 @@ def get_user_reports(user_id):
 
 @user_bp.route('/users/<string:user_id>/reports/<string:date>', methods=['GET'])
 def get_daily_report(user_id, date):
-    report = DailyReport.query.filter_by(user_id=user_id, date=date).first_or_404()
+    print(f"Fetching report for user_id: {user_id}, date: {date}")
+    report = DailyReport.query.filter_by(user_id=user_id, date=date).first()
+    if not report:
+        print(f"No report found for user_id: {user_id}, date: {date}")
+        return jsonify({'error': 'Report not found'}), 404
+    print(f"Report found: {report.to_dict()}")
     return jsonify(report.to_dict())
 
 @user_bp.route('/users/<string:user_id>/reports', methods=['POST'])
+# @token_required  # テスト用に一時的に無効化
 def create_daily_report(user_id):
     data = request.json
     
@@ -125,6 +131,7 @@ def create_daily_report(user_id):
     return jsonify(report.to_dict()), 201
 
 @user_bp.route('/users/<string:user_id>/reports/<string:date>', methods=['PUT'])
+# @token_required  # テスト用に一時的に無効化
 def update_daily_report(user_id, date):
     report = DailyReport.query.filter_by(user_id=user_id, date=date).first_or_404()
     data = request.json
@@ -237,6 +244,7 @@ def generate_ai_feedback():
 
 # Generate AI summary for daily report
 @user_bp.route('/ai/summary', methods=['POST'])
+# @token_required  # テスト用に一時的に無効化
 def generate_ai_summary():
     data = request.json
     total_study_time = data.get('total_study_time', 0)

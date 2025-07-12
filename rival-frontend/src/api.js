@@ -1,9 +1,14 @@
 import { API_BASE_URL } from './config';
 
 const getAuthHeader = async (auth) => {
-    if (!auth.currentUser) return {};
-    const token = await auth.currentUser.getIdToken();
-    return { 'Authorization': `Bearer ${token}` };
+    try {
+        if (!auth.currentUser) return {};
+        const token = await auth.currentUser.getIdToken();
+        return { 'Authorization': `Bearer ${token}` };
+    } catch (error) {
+        console.log('Auth not available, proceeding without token');
+        return {};
+    }
 }
 
 export const api = {
@@ -95,6 +100,9 @@ export const api = {
         const response = await fetch(`${API_BASE_URL}/users/${userId}/reports/${dateString}`, {
             headers: headers
         });
+        if (response.status === 404) {
+            return null; // レポートが存在しない場合はnullを返す
+        }
         if (!response.ok) throw new Error('Failed to fetch user reports');
         return response.json();
     },
