@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../config';
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,7 +39,7 @@ export default function Dashboard({ user, onLogout }) {
     setCameraEnabled(true)
   }
 
-  const handleStopStudy = async () => {
+  const handleStopStudy = useCallback(async () => {
     setIsStudying(false);
     setCameraEnabled(false);
 
@@ -71,7 +71,7 @@ export default function Dashboard({ user, onLogout }) {
     setPomodoroTime(WORK_DURATION);
     setIsBreak(false);
     setCurrentCycle(1);
-  };
+  }, [studyTime, interruptionCount, currentFocusScore, user]);
 
   // ポモドーロタイマーのサイクル遷移ロジック
   useEffect(() => {
@@ -214,7 +214,7 @@ export default function Dashboard({ user, onLogout }) {
                     id="cycles"
                     type="number"
                     value={targetCycles}
-                    onChange={(e) => setTargetCycles(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => setTargetCycles(Math.max(parseInt(e.target.value, 10) || 1, 1))}
                     min="1"
                     className="bg-white/10 border-white/20 text-white"
                     disabled={isStudying}
