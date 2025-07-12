@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { auth } from './firebase'; // Firebase authをインポート
 import { onAuthStateChanged } from 'firebase/auth';
 import LoginPage from './components/LoginPage';
@@ -11,7 +12,7 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // 認証状態の確認中フラグ
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Firebaseの認証状態の変更を監視
@@ -26,11 +27,7 @@ function App() {
 
   const handleLogout = async () => {
     await auth.signOut();
-    setCurrentPage('dashboard');
-  };
-
-  const handleNavigate = (page) => {
-    setCurrentPage(page);
+    navigate('/'); // ログアウト後はログインページ
   };
 
   // 認証状態を確認中はローディング表示などを出す（任意）
@@ -38,43 +35,32 @@ function App() {
     return <div>Loading...</div>; // ここは適切なローディング画面にできる
   }
 
-  if (!user) {
-    return <LoginPage />;
-  }
-
-  // ... (switch文は変更なし)
-
-  switch (currentPage) {
-    case 'curriculum':
-      return (
-        <CurriculumPage 
-          user={user} 
-          onBack={() => handleNavigate('dashboard')} 
-        />
-      )
-    case 'reports':
-      return (
-        <ReportsPage 
-          user={user} 
-          onBack={() => handleNavigate('dashboard')} 
-        />
-      )
-    case 'settings':
-      return (
-        <SettingsPage 
-          user={user} 
-          onBack={() => handleNavigate('dashboard')} 
-        />
-      )
-    default:
-      return (
-        <Dashboard 
-          user={user} 
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-        />
-      )
-  }
+  return (
+    <Routes>
+      {!user ? (
+        <Route path="/*" element={<LoginPage />} />
+      ) : (
+        <>
+          <Route
+            path="/"
+            element={<Dashboard user={user} onLogout={handleLogout} />}
+          />
+          <Route
+            path="/curriculum"
+            element={<CurriculumPage user={user} onBack={() => navigate('/')} />}
+          />
+          <Route
+            path="/reports"
+            element={<ReportsPage user={user} onBack={() => navigate('/')} />}
+          />
+          <Route
+            path="/settings"
+            element={<SettingsPage user={user} onBack={() => navigate('/')} />}
+          />
+        </>
+      )}
+    </Routes>
+  );
 }
 
-export default App
+export default App;
