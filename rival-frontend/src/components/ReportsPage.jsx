@@ -83,19 +83,19 @@ export default function ReportsPage({ user, onBack }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="outline"
           size="sm"
           onClick={onBack}
-          className="text-white border-white/20 hover:bg-white/10"
+          className="text-foreground border hover:bg-accent"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           ダッシュボードに戻る
         </Button>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           学習レポート
         </h1>
       </div>
@@ -105,7 +105,7 @@ export default function ReportsPage({ user, onBack }) {
         <div className="lg:col-span-1">
           <Card className="bg-white/10 backdrop-blur-md border-white/20">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-card-foreground flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5" />
                 日付選択
               </CardTitle>
@@ -115,10 +115,10 @@ export default function ReportsPage({ user, onBack }) {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="text-white"
+                className="text-card-foreground"
                 classNames={{
-                  day_selected: "bg-purple-600 text-white",
-                  day_today: "bg-purple-400/50 text-white",
+                  day_selected: "bg-purple-600 text-card-foreground",
+                  day_today: "bg-purple-400/50 text-card-foreground",
                 }}
               />
             </CardContent>
@@ -130,7 +130,7 @@ export default function ReportsPage({ user, onBack }) {
           {loading ? (
             <Card className="bg-white/10 backdrop-blur-md border-white/20">
               <CardContent className="p-8 text-center">
-                <div className="text-white">レポートを読み込み中...</div>
+                <div className="text-foreground">レポートを読み込み中...</div>
               </CardContent>
             </Card>
           ) : reportData ? (
@@ -140,39 +140,39 @@ export default function ReportsPage({ user, onBack }) {
                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
                   <CardContent className="p-4 text-center">
                     <Clock className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {formatTime(reportData.total_study_time)}
                     </div>
-                    <div className="text-sm text-slate-300">総学習時間</div>
+                    <div className="text-sm text-muted-foreground">総学習時間</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
                   <CardContent className="p-4 text-center">
-                    <Target className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">
+                    <Target className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-foreground">
                       {formatTime(reportData.total_focus_time)}
                     </div>
-                    <div className="text-sm text-slate-300">集中時間</div>
+                    <div className="text-sm text-muted-foreground">集中時間</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {Math.round(reportData.avg_focus_score)}
                     </div>
-                    <div className="text-sm text-slate-300">平均集中スコア</div>
+                    <div className="text-sm text-muted-foreground">平均集中スコア</div>
                   </CardContent>
                 </Card>
                 
                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
                   <CardContent className="p-4 text-center">
                     <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {reportData.interruption_count}
                     </div>
-                    <div className="text-sm text-slate-300">中断回数</div>
+                    <div className="text-sm text-muted-foreground">中断回数</div>
                   </CardContent>
                 </Card>
               </div>
@@ -180,7 +180,7 @@ export default function ReportsPage({ user, onBack }) {
               {/* Focus Score Chart */}
               <Card className="bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader>
-                  <CardTitle className="text-white">時間帯別集中度推移</CardTitle>
+                  <CardTitle className="text-card-foreground">時間帯別集中度推移</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-64">
@@ -221,11 +221,11 @@ export default function ReportsPage({ user, onBack }) {
               {/* AI Summary */}
               <Card className="bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader>
-                  <CardTitle className="text-white">AIライバルからの総評</CardTitle>
+                  <CardTitle className="text-card-foreground">AIライバルからの総評</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="bg-slate-800/50 p-4 rounded-lg">
-                    <p className="text-white leading-relaxed">
+                    <p className="text-card-foreground leading-relaxed">
                       {reportData.ai_summary}
                     </p>
                   </div>
@@ -235,18 +235,18 @@ export default function ReportsPage({ user, onBack }) {
               {/* User Notes */}
               <Card className="bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader>
-                  <CardTitle className="text-white">メモ・振り返り</CardTitle>
+                  <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Textarea
                     value={userNotes}
                     onChange={(e) => setUserNotes(e.target.value)}
                     placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 min-h-24"
+                    className="bg-white/10 border-white/20 text-card-foreground placeholder:text-muted-foreground min-h-24"
                   />
                   <Button
                     onClick={saveUserNotes}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="bg-purple-600 hover:bg-purple-700 text-card-foreground"
                   >
                     メモを保存
                   </Button>
@@ -256,10 +256,10 @@ export default function ReportsPage({ user, onBack }) {
           ) : (
             <Card className="bg-white/10 backdrop-blur-md border-white/20">
               <CardContent className="p-8 text-center">
-                <div className="text-slate-400 mb-4">
+                <div className="text-muted-foreground mb-4">
                   選択した日付のレポートがありません
                 </div>
-                <div className="text-sm text-slate-500">
+                <div className="text-sm text-muted-foreground">
                   学習を開始してデータを蓄積してください
                 </div>
               </CardContent>

@@ -138,11 +138,11 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const pomodoroSeconds = pomodoroTime % 60
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-background p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          AI Study Buddy <span className="text-purple-400">"Rival"</span>
+        <h1 className="text-2xl font-bold text-foreground">
+          AI Study Buddy <span className="text-primary">"Rival"</span>
         </h1>
         <div className="flex gap-2">
           <Button
@@ -167,7 +167,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="text-red-500 border-red-500/20 hover:bg-white/10"
+            className="text-destructive border-red-500/20 hover:bg-white/10"
           >
             ログアウト
           </Button>
@@ -215,7 +215,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-3xl font-mono text-white mb-2">
+                <div className="text-3xl font-mono text-foreground mb-2">
                   {pomodoroMinutes}:{pomodoroSeconds.toString().padStart(2, '0')}
                 </div>
                 <Badge variant={isBreak ? "secondary" : "default"} className="mb-4">
@@ -236,7 +236,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-4xl font-bold text-white mb-2">
+                <div className="text-4xl font-bold text-foreground mb-2">
                   {currentFocusScore}
                 </div>
                 <Progress value={currentFocusScore} className="w-full mb-2" />
@@ -255,19 +255,19 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
               <CardTitle className="text-white">リアルタイム統計</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-foreground">
                 <span>総学習時間:</span>
                 <span className="font-mono">{formatTime(studyTime)}</span>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-foreground">
                 <span>集中時間:</span>
                 <span className="font-mono">{formatTime(focusTime)}</span>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-foreground">
                 <span>中断回数:</span>
                 <span className="font-mono">{interruptionCount}</span>
               </div>
-              <div className="flex justify-between text-white">
+              <div className="flex justify-between text-foreground">
                 <span>集中率:</span>
                 <span className="font-mono">
                   {studyTime > 0 ? Math.round((focusTime / studyTime) * 100) : 0}%

@@ -109,14 +109,14 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
     return (
       <Card className="bg-white/10 backdrop-blur-md border-white/20">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-card-foreground flex items-center gap-2">
             <CameraOff className="w-5 h-5" />
             集中度モニタリング
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
-            <div className="text-center text-slate-400">
+            <div className="text-center text-muted-foreground">
               <CameraOff className="w-12 h-12 mx-auto mb-2" />
               <p>学習を開始してカメラを有効にしてください</p>
             </div>
@@ -129,7 +129,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   return (
     <Card className="bg-white/10 backdrop-blur-md border-white/20">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+        <CardTitle className="text-card-foreground flex items-center gap-2">
           <Camera className="w-5 h-5" />
           集中度モニタリング
         </CardTitle>
@@ -138,7 +138,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
         {error && (
           <Alert className="bg-red-500/20 border-red-500/50">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-white">
+            <AlertDescription className="text-foreground">
               {error}
             </AlertDescription>
           </Alert>
@@ -160,28 +160,28 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           
           {isLoading && (
             <div className="absolute inset-0 bg-slate-800/50 rounded-lg flex items-center justify-center">
-              <div className="text-white">カメラを起動中...</div>
+              <div className="text-foreground">カメラを起動中...</div>
             </div>
           )}
         </div>
         
         {/* Detection Status */}
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className={`p-2 rounded ${detectionData.faceDetected ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+          <div className={`p-2 rounded ${detectionData.faceDetected ? 'bg-green-500/20 text-primary' : 'bg-red-500/20 text-destructive'}`}>
             顔検出: {detectionData.faceDetected ? '✓' : '✗'}
           </div>
-          <div className={`p-2 rounded ${detectionData.eyesOpen ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+          <div className={`p-2 rounded ${detectionData.eyesOpen ? 'bg-green-500/20 text-primary' : 'bg-red-500/20 text-destructive'}`}>
             目の状態: {detectionData.eyesOpen ? '開いている' : '閉じている'}
           </div>
-          <div className={`p-2 rounded ${detectionData.lookingAtScreen ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+          <div className={`p-2 rounded ${detectionData.lookingAtScreen ? 'bg-green-500/20 text-primary' : 'bg-red-500/20 text-destructive'}`}>
             視線: {detectionData.lookingAtScreen ? '画面を見ている' : '逸れている'}
           </div>
-          <div className={`p-2 rounded ${detectionData.posture === 'good' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
+          <div className={`p-2 rounded ${detectionData.posture === 'good' ? 'bg-green-500/20 text-primary' : 'bg-yellow-500/20 text-yellow-300'}`}>
             姿勢: {detectionData.posture === 'good' ? '良好' : '要改善'}
           </div>
         </div>
         
-        <div className="text-xs text-slate-400 text-center">
+        <div className="text-xs text-muted-foreground text-center">
           ※ 映像はサーバーに送信されず、ブラウザ内で処理されます
         </div>
       </CardContent>
