@@ -27,8 +27,18 @@ if app.config['SECRET_KEY'] == 'default_secret_key':
     print("警告: SECRET_KEYが環境変数に設定されていません。デフォルト値を使用します。")
 
 # データベース設定
-db_path = os.path.join(os.path.dirname(__file__), 'database', 'app.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
+if os.environ.get('DATABASE_URL'):
+    # AWS RDS PostgreSQL
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+elif os.environ.get('AWS_REGION') or os.environ.get('AWS_EXECUTION_ENV'):
+    # AWS環境でDATABASE_URLが未設定の場合の警告
+    print("警告: AWS環境ですがDATABASE_URLが設定されていません。SQLiteを使用します。")
+    db_path = os.path.join(os.path.dirname(__file__), 'database', 'app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
+else:
+    # ローカル開発用SQLite
+    db_path = os.path.join(os.path.dirname(__file__), 'database', 'app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Firebase Admin SDKの初期化
@@ -57,10 +67,16 @@ CORS(app, resources={r"/api/*": {"origins": "*"}}) # APIルートに対しての
 # --- データベース ---
 db.init_app(app)
 with app.app_context():
-    # データベースファイルが存在しない場合のみテーブルを作成
-    if not os.path.exists(db_path):
+    if os.environ.get('DATABASE_URL'):
+        # AWS RDS用 - 常にテーブル作成を試行（存在する場合はスキップされる）
         db.create_all()
-        print("データベースを新規作成しました。")
+        print("AWS RDSデータベースに接続しました。")
+    else:
+        # ローカル開発用SQLite
+        db_path = os.path.join(os.path.dirname(__file__), 'database', 'app.db')
+        if not os.path.exists(db_path):
+            db.create_all()
+            print("ローカルデータベースを新規作成しました。")
 
 # --- Blueprints ---
 app.register_blueprint(user_bp, url_prefix='/api')
