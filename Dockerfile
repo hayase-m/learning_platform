@@ -6,6 +6,7 @@ WORKDIR /app
 
 # まず依存関係ファイルをコピーしてインストール（キャッシュ効率のため）
 COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip setuptools
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションコードをコピー
