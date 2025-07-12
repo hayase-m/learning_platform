@@ -7,9 +7,8 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat } from 'lucide-react'
+import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat, Clock } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
-import AIFeedback from './AIFeedback'
 import { api } from '../api'
 import { auth } from '../firebase'
 
@@ -25,11 +24,11 @@ export default function Dashboard({ user, onLogout }) {
   const [pomodoroTime, setPomodoroTime] = useState(WORK_DURATION) // 25 minutes
   const [isBreak, setIsBreak] = useState(false)
   const [cameraEnabled, setCameraEnabled] = useState(false)
-  const [aiMessages, setAiMessages] = useState([])
   
   const [targetCycles, setTargetCycles] = useState(4)
   const [currentCycle, setCurrentCycle] = useState(1)
   const [selectedTask, setSelectedTask] = useState(null)
+  const [activityChecklist, setActivityChecklist] = useState({})
 
   const studyTimerRef = useRef(null)
   const pomodoroTimerRef = useRef(null)
@@ -40,7 +39,21 @@ export default function Dashboard({ user, onLogout }) {
     if (task) {
       setSelectedTask(JSON.parse(task));
     }
+    const checklist = localStorage.getItem('activityChecklist');
+    if (checklist) {
+      setActivityChecklist(JSON.parse(checklist));
+    }
   }, []);
+
+  // アクティビティのチェック状態を更新
+  const handleActivityCheck = (activityIndex, checked) => {
+    const newChecklist = {
+      ...activityChecklist,
+      [`${selectedTask.curriculumId}-${selectedTask.day}-${activityIndex}`]: checked
+    };
+    setActivityChecklist(newChecklist);
+    localStorage.setItem('activityChecklist', JSON.stringify(newChecklist));
+  };
 
   const handleStartStudy = () => {
     setCurrentCycle(1)
@@ -385,13 +398,108 @@ export default function Dashboard({ user, onLogout }) {
           />
         </div>
 
-        {/* Right Sidebar - AI Feedback */}
+        {/* Right Sidebar - Learning Activities */}
         <div>
-          <AIFeedback
-            focusScore={currentFocusScore}
-            messages={aiMessages}
-            onNewMessage={(message) => setAiMessages(prev => [message, ...prev.slice(0, 9)])}
-          />
+          {selectedTask ? (
+            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  学習活動チェックリスト
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm text-white/70 mb-4">
+                  第{selectedTask.day}日目: {selectedTask.title}
+                </div>
+                {selectedTask.activities?.map((activity, index) => {
+                  const checkKey = `${selectedTask.curriculumId}-${selectedTask.day}-${index}`;
+                  const isChecked = activityChecklist[checkKey] || false;
+                  
+                  return (
+                    <div key={index} className="bg-white/5 p-3 rounded-lg space-y-2">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => handleActivityCheck(index, e.target.checked)}
+                          className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-4 h-4" />
+                            <span className={`font-medium ${isChecked ? 'line-through text-white/50' : 'text-white'}`}>
+                              {activity.title}
+                            </span>
+                            <Badge variant="secondary" className="text-xs">
+                              {activity.duration_minutes}分
+                            </Badge>
+                          </div>
+                          <p className={`text-sm ${isChecked ? 'line-through text-white/30' : 'text-white/70'}`}>
+                            {activity.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {selectedTask.activities?.length > 0 && (() => {
+                  const completedCount = selectedTask.activities.filter((_, index) => {
+                    const checkKey = `${selectedTask.curriculumId}-${selectedTask.day}-${index}`;
+                    return activityChecklist[checkKey];
+                  }).length;
+                  const totalCount = selectedTask.activities.length;
+                  const isAllCompleted = completedCount === totalCount;
+                  
+                  return (
+                    <div className="pt-2 border-t border-white/10 space-y-3">
+                      <div className="text-sm text-white/70">
+                        進捗: {completedCount} / {totalCount}
+                      </div>
+                      <Progress 
+                        value={(completedCount / totalCount) * 100} 
+                        className="w-full" 
+                      />
+                      {isAllCompleted && (
+                        <Button
+                          onClick={async () => {
+                            try {
+                              await api.updateCurriculumProgress(auth, selectedTask.curriculumId, selectedTask.day, { completed: true });
+                              localStorage.removeItem('selectedTask');
+                              // チェックリストもクリア
+                              const newChecklist = { ...activityChecklist };
+                              selectedTask.activities.forEach((_, index) => {
+                                delete newChecklist[`${selectedTask.curriculumId}-${selectedTask.day}-${index}`];
+                              });
+                              setActivityChecklist(newChecklist);
+                              localStorage.setItem('activityChecklist', JSON.stringify(newChecklist));
+                              setSelectedTask(null);
+                              alert('🎉 全ての学習活動を完了しました！タスクを完了します。');
+                            } catch (error) {
+                              console.error('Error completing task:', error);
+                              alert('タスクの完了に失敗しました');
+                            }
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white"
+                          size="sm"
+                        >
+                          🎉 全ての活動を完了！
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <CardContent className="p-6 text-center">
+                <BookOpen className="w-12 h-12 mx-auto mb-4 text-white/50" />
+                <p className="text-white/70">タスクが選択されていません</p>
+                <p className="text-white/50 text-sm">カリキュラムからタスクを選択してください</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
