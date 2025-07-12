@@ -5,6 +5,6 @@ build:
     build:
       - pip install -r requirements.txt
 run:
-  command: python -m gunicorn --chdir rival-backend -w 4 "src.main:app" --bind "0.0.0.0:8080"
+  command: gunicorn -w 4 -b 0.0.0.0:8080 rival-backend.src.main:app
   network:
     port: 8080
