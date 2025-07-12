@@ -35,7 +35,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 640 },
@@ -43,16 +43,16 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           frameRate: { ideal: 15 }
         }
       })
-      
+
       setStream(mediaStream)
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
         videoRef.current.play()
       }
-      
+
       startFocusDetection()
-      
+
     } catch (err) {
       setError('カメラへのアクセスが拒否されました。ブラウザの設定を確認してください。')
       console.error('Camera access error:', err)
@@ -66,7 +66,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
       stream.getTracks().forEach(track => track.stop())
       setStream(null)
     }
-    
+
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
@@ -104,25 +104,25 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
           onFocusScoreUpdate(0);
         }
       }
-      
+
       setTimeout(detectFocus, 2000); // 2秒ごとに検出
     }
-    
+
     detectFocus();
   }
 
   if (!enabled) {
     return (
-      <Card className="bg-white/10 backdrop-blur-md border-white/20">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-card-foreground flex items-center gap-2">
             <CameraOff className="w-5 h-5" />
             集中度モニタリング
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="aspect-video bg-slate-800 rounded-lg flex items-center justify-center">
-            <div className="text-center text-slate-400">
+          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
               <CameraOff className="w-12 h-12 mx-auto mb-2" />
               <p>学習を開始してカメラを有効にしてください</p>
             </div>
@@ -133,9 +133,9 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   }
 
   return (
-    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+        <CardTitle className="text-card-foreground flex items-center gap-2">
           <Camera className="w-5 h-5" />
           集中度モニタリング
         </CardTitle>
@@ -144,16 +144,16 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
         {error && (
           <Alert className="bg-red-500/20 border-red-500/50">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-white">
+            <AlertDescription className="text-foreground">
               {error}
             </AlertDescription>
           </Alert>
         )}
-        
+
         <div className="relative">
           <video
             ref={videoRef}
-            className="w-full aspect-video bg-slate-800 rounded-lg"
+            className="w-full aspect-video bg-muted rounded-lg"
             autoPlay
             muted
             playsInline
@@ -163,24 +163,24 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
             className="absolute top-0 left-0 w-full h-full pointer-events-none"
             style={{ display: 'none' }}
           />
-          
+
           {isLoading && (
-            <div className="absolute inset-0 bg-slate-800/50 rounded-lg flex items-center justify-center">
-              <div className="text-white">カメラを起動中...</div>
+            <div className="absolute inset-0 bg-muted/50 rounded-lg flex items-center justify-center">
+              <div className="text-foreground">カメラを起動中...</div>
             </div>
           )}
         </div>
-        
+
         {/* Detection Status */}
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className={`p-2 rounded ${detectionData.faceDetected ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+          <div className={`p-2 rounded ${detectionData.faceDetected ? 'bg-green-500/20 text-primary' : 'bg-red-500/20 text-destructive'}`}>
             顔検出: {detectionData.faceDetected ? '✓' : '✗'}
           </div>
           <div className={`p-2 rounded bg-blue-500/20 text-blue-300`}>
             集中スコア: {detectionData.focusScore}%
           </div>
         </div>
-        
+
         <div className="text-xs text-slate-400 text-center">
           集中スコア = 在席時間 / 総測定時間 × 100%
         </div>
