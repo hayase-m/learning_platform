@@ -149,4 +149,14 @@ export const api = {
         if (!response.ok) throw new Error('Failed to create user');
         return response.json();
     },
+
+    async deleteCurriculum(auth, curriculumId) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/curriculums/${curriculumId}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+        if (!response.ok) throw new Error('Failed to delete curriculum');
+        return response.status === 204 ? {} : response.json();
+    },
 };
