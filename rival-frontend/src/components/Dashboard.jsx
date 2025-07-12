@@ -33,6 +33,30 @@ export default function Dashboard({ user, onLogout }) {
   const studyTimerRef = useRef(null)
   const pomodoroTimerRef = useRef(null)
 
+  // ポモドーロタイマーのサイクル遷移ロジック
+  useEffect(() => {
+    if (isStudying && pomodoroTime <= 0) {
+      if (isBreak) {
+        // 休憩終了 -> 次の集中時間へ
+        setIsBreak(false);
+        setCurrentCycle(prevCycle => {
+          const nextCycle = prevCycle + 1;
+          // 目標サイクルに到達したら自動的に停止
+          if (nextCycle > targetCycles) {
+            handleStopStudy();
+            return prevCycle; // 停止するのでサイクルは進めない
+          }
+          return nextCycle;
+        });
+        setPomodoroTime(WORK_DURATION);
+      } else {
+        // 集中終了 -> 休憩へ
+        setIsBreak(true);
+        setPomodoroTime(BREAK_DURATION);
+      }
+    }
+  }, [pomodoroTime, isStudying, isBreak, currentCycle, targetCycles, handleStopStudy]);
+
   useEffect(() => {
     if (isStudying) {
       studyTimerRef.current = setInterval(() => {
@@ -42,25 +66,8 @@ export default function Dashboard({ user, onLogout }) {
       pomodoroTimerRef.current = setInterval(() => {
         setPomodoroTime(prevPomodoroTime => {
           if (prevPomodoroTime <= 1) {
-            // タイマーが0になったら次のサイクルへ
-            if (isBreak) {
-              // 休憩終了 -> 次の集中時間へ
-              setIsBreak(false)
-              setCurrentCycle(prevCycle => {
-                const nextCycle = prevCycle + 1;
-                // 目標サイクルに到達したら自動的に停止
-                if (nextCycle > targetCycles) {
-                  handleStopStudy();
-                  return prevCycle; // 停止するのでサイクルは進めない
-                }
-                return nextCycle;
-              });
-              return WORK_DURATION;
-            } else {
-              // 集中終了 -> 休憩へ
-              setIsBreak(true);
-              return BREAK_DURATION;
-            }
+            // タイマーが0になったら、次の状態への遷移は別のuseEffectで処理
+            return 0; // 一旦0に設定し、次のuseEffectで処理をトリガー
           }
           return prevPomodoroTime - 1;
         });
@@ -74,7 +81,7 @@ export default function Dashboard({ user, onLogout }) {
       clearInterval(studyTimerRef.current);
       clearInterval(pomodoroTimerRef.current);
     };
-  }, [isStudying, targetCycles]); // isStudying と targetCycles のみに依存
+  }, [isStudying, targetCycles, isBreak]); // isStudying, targetCycles, and isBreak に依存
 
   const handleStartStudy = () => {
     setCurrentCycle(1)
