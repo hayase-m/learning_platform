@@ -1,22 +1,18 @@
-# このDockerfileは必ずリポジトリのルートに配置してください
-
-# 1. ベースイメージを選択
+# AWS App Runner用のDockerfile
 FROM python:3.11-slim
 
-# 2. コンテナ内の作業ディレクトリを/appに設定
+# ワーキングディレクトリを設定
 WORKDIR /app
 
-# 3. 依存関係ファイルを先にコピーしてインストール
-# リポジトリのルートからrequirements.txtをコピー
-COPY requirements.txt .
+# まず依存関係ファイルをコピーしてインストール（キャッシュ効率のため）
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. アプリケーションコードをコピー
-# rival-backendディレクトリの内容のみをコピー
-COPY rival-backend/ .
+# アプリケーションコードをコピー
+COPY rival-backend/ ./
 
-# 5. ポートを指定
+# ポートを公開
 EXPOSE 8080
 
-# 6. 起動コマンドを定義
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "src.main:app"]
+# アプリケーションを起動
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "src.main:app"]
