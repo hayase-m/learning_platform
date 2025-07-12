@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Camera, CameraOff, AlertTriangle } from 'lucide-react'
-import axios from 'axios';
+import { API_BASE_URL } from '@/config';
 
 export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   const videoRef = useRef(null)
@@ -84,21 +84,32 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
     return canvas.toDataURL('image/jpeg');
   }
 
-  const startFocusDetection = () => {
+    const startFocusDetection = () => {
     const detectFocus = async () => {
       if (!enabled) return;
 
       const image = captureFrame();
       if (image) {
         try {
-          const response = await axios.post('/api/concentration/detect', { image });
-          const data = response.data;
+          const response = await fetch(`${API_BASE_URL}/concentration/detect`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+
+          const data = await response.json();
           setDetectionData(data);
           onFocusScoreUpdate(data.focusScore || 0);
           setError(null);
         } catch (error) {
           console.error('Error detecting face:', error);
-          const errorMessage = error.response?.data?.error || 'サーバーとの通信に失敗しました。';
+          const errorMessage = error.message || 'サーバーとの通信に失敗しました。';
           setError(errorMessage);
           setDetectionData({ faceDetected: false, confidence: 0, focusScore: 0, elapsedTime: 0, totalDetections: 0, presentDetections: 0 });
           onFocusScoreUpdate(0);
