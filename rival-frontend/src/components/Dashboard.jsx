@@ -19,6 +19,7 @@ const BREAK_DURATION = 5 * 60; // 5 minutes in seconds
 
 export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate()
+  const [showStartMenu, setShowStartMenu] = useState(!sessionStorage.getItem('hasSeenIntro'))
   const [isStudying, setIsStudying] = useState(false)
   const [studyTime, setStudyTime] = useState(0)
   const [currentFocusScore, setCurrentFocusScore] = useState(75)
@@ -147,6 +148,46 @@ export default function Dashboard({ user, onLogout }) {
   const pomodoroMinutes = Math.floor(pomodoroTime / 60)
   const pomodoroSeconds = pomodoroTime % 60
 
+  useEffect(() => {
+    const hasSeenIntro = sessionStorage.getItem('hasSeenIntro')
+    if (hasSeenIntro) {
+      setShowStartMenu(false)
+    } else {
+      const timer = setTimeout(() => {
+        setShowStartMenu(false)
+        sessionStorage.setItem('hasSeenIntro', 'true')
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  if (showStartMenu) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-foreground mb-4 opacity-0 animate-[fadeInUp_1s_ease-out_forwards]">
+            AI Study Buddy <span className="text-primary">"Rival"</span>
+          </h1>
+          <p className="text-2xl text-muted-foreground opacity-0 animate-[fadeInUp_1s_ease-out_0.5s_forwards]">
+            バトルの準備をしています...
+          </p>
+        </div>
+        <style jsx>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Header */}
@@ -186,7 +227,10 @@ export default function Dashboard({ user, onLogout }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={onLogout}
+            onClick={() => {
+              sessionStorage.removeItem('hasSeenIntro')
+              onLogout()
+            }}
             className="text-destructive border-destructive hover:bg-card"
           >
             ログアウト
@@ -224,8 +268,8 @@ export default function Dashboard({ user, onLogout }) {
                       -
                     </Button>
                     <div className="flex-1 text-center">
-                      <div className="text-2xl font-bold text-foreground">{targetCycles}</div>
-                      <div className="text-xs text-muted-foreground">{targetCycles * 25}分 + 休憩</div>
+                      <div className="text-2xl text-foreground font-mono">{targetCycles}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{targetCycles * 25}分 + 休憩</div>
                     </div>
                     <Button
                       type="button"
@@ -280,7 +324,7 @@ export default function Dashboard({ user, onLogout }) {
                   className="w-full"
                 />
                 {isStudying && (
-                  <div className="text-sm text-card-foreground/70 mt-2">
+                  <div className="text-sm text-card-foreground/70 mt-2 font-mono">
                     サイクル: {currentCycle} / {targetCycles}
                   </div>
                 )}
@@ -295,7 +339,7 @@ export default function Dashboard({ user, onLogout }) {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-4xl font-bold text-foreground mb-2">
+                <div className="text-4xl text-foreground mb-2 font-mono">
                   {currentFocusScore}
                 </div>
                 <Progress value={currentFocusScore} className="w-full mb-2" />
