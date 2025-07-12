@@ -95,9 +95,18 @@ export default function Dashboard({ user, onLogout }) {
     setCurrentCycle(1);
   }, [studyTime, interruptionCount, currentFocusScore, user]);
 
+  const playNotificationSound = () => {
+    // publicフォルダに置いたファイルへのパスを指定
+    const audio = new Audio('/notification.mp3'); 
+    audio.play();
+  };
+
   // ポモドーロタイマーのサイクル遷移ロジック
   useEffect(() => {
     if (isStudying && pomodoroTime <= 0) {
+      // 通知音を再生
+      playNotificationSound();
+      
       if (isBreak) {
         // 休憩終了 -> 次の集中時間へ
         setIsBreak(false);
@@ -276,7 +285,7 @@ export default function Dashboard({ user, onLogout }) {
                   {pomodoroMinutes}:{pomodoroSeconds.toString().padStart(2, '0')}
                 </div>
                 <Badge variant={isBreak ? "secondary" : "default"} className="mb-4">
-                  {isBreak ? '休憩時間' : '集中時間'}
+                  {isBreak ? '🛌 休憩時間' : '📚 集中時間'}
                 </Badge>
                 <Progress
                   value={isBreak ? ((BREAK_DURATION - pomodoroTime) / BREAK_DURATION) * 100 : ((WORK_DURATION - pomodoroTime) / WORK_DURATION) * 100}
