@@ -121,7 +121,7 @@ export default function Dashboard({ user, onLogout }) {
       clearInterval(studyTimerRef.current);
       clearInterval(pomodoroTimerRef.current);
     };
-  }, [isStudying, targetCycles, isBreak, currentCycle]); // isStudying, targetCycles, isBreak, and currentCycle に依存
+  }, [isStudying]); // Narrowed dependency array to only isStudying
 
   const handleFocusScoreUpdate = (score) => {
     setCurrentFocusScore(score)
