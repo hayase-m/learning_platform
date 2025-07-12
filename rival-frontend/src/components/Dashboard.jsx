@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config';
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -10,7 +11,8 @@ import AIFeedback from './AIFeedback'
 import { api } from '../api'
 import { auth } from '../firebase'
 
-export default function Dashboard({ user, onLogout, onNavigate }) {
+export default function Dashboard({ user, onLogout }) {
+  const navigate = useNavigate()
   const [isStudying, setIsStudying] = useState(false)
   const [studyTime, setStudyTime] = useState(0)
   const [focusTime, setFocusTime] = useState(0)
@@ -136,7 +138,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onNavigate('curriculum')}
+            onClick={() => navigate('/curriculum')}
             className="text-white border-white/20 hover:bg-white/10"
           >
             <BookOpen className="w-4 h-4 mr-2" />
@@ -145,7 +147,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onNavigate('reports')}
+            onClick={() => navigate('/reports')}
             className="text-white border-white/20 hover:bg-white/10"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
@@ -154,7 +156,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onNavigate('settings')}
+            onClick={() => navigate('/settings')}
             className="text-white border-white/20 hover:bg-white/10"
           >
             <Settings className="w-4 h-4 mr-2" />
