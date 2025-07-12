@@ -29,9 +29,18 @@ export default function Dashboard({ user, onLogout }) {
   
   const [targetCycles, setTargetCycles] = useState(4)
   const [currentCycle, setCurrentCycle] = useState(1)
+  const [selectedTask, setSelectedTask] = useState(null)
 
   const studyTimerRef = useRef(null)
   const pomodoroTimerRef = useRef(null)
+
+  // 選択中のタスクを読み込み
+  useEffect(() => {
+    const task = localStorage.getItem('selectedTask');
+    if (task) {
+      setSelectedTask(JSON.parse(task));
+    }
+  }, []);
 
   const handleStartStudy = () => {
     setCurrentCycle(1)
@@ -288,6 +297,67 @@ export default function Dashboard({ user, onLogout }) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Selected Task */}
+          {selectedTask && (
+            <Card className="bg-blue-500/20 backdrop-blur-md border-blue-400/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  選択中のタスク
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-white">
+                  <div className="font-medium">第{selectedTask.day}日目: {selectedTask.title}</div>
+                  <div className="text-sm text-white/70 mt-1">{selectedTask.curriculumTitle}</div>
+                </div>
+                {selectedTask.objectives && (
+                  <div>
+                    <div className="text-sm font-medium text-white mb-1">今日の目標:</div>
+                    <ul className="text-sm text-white/80 space-y-1">
+                      {selectedTask.objectives.slice(0, 2).map((obj, idx) => (
+                        <li key={idx} className="flex items-start gap-1">
+                          <span className="text-blue-400">•</span>
+                          <span>{obj}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await api.updateCurriculumProgress(auth, selectedTask.curriculumId, selectedTask.day, { completed: true });
+                        localStorage.removeItem('selectedTask');
+                        setSelectedTask(null);
+                        alert('🎉 タスクを完了しました！');
+                      } catch (error) {
+                        console.error('Error completing task:', error);
+                        alert('タスクの完了に失敗しました');
+                      }
+                    }}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    完了
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      localStorage.removeItem('selectedTask');
+                      setSelectedTask(null);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-white border-white/20 hover:bg-white/10"
+                  >
+                    クリア
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Real-time Stats */}
           <Card className="bg-white/10 backdrop-blur-md border-white/20">
