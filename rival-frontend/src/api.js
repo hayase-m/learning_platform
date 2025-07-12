@@ -1,9 +1,14 @@
 import { API_BASE_URL } from './config';
 
 const getAuthHeader = async (auth) => {
-    if (!auth.currentUser) return {};
-    const token = await auth.currentUser.getIdToken();
-    return { 'Authorization': `Bearer ${token}` };
+    try {
+        if (!auth.currentUser) return {};
+        const token = await auth.currentUser.getIdToken();
+        return { 'Authorization': `Bearer ${token}` };
+    } catch (error) {
+        console.log('Auth not available, proceeding without token');
+        return {};
+    }
 }
 
 export const api = {
@@ -95,6 +100,9 @@ export const api = {
         const response = await fetch(`${API_BASE_URL}/users/${userId}/reports/${dateString}`, {
             headers: headers
         });
+        if (response.status === 404) {
+            return null; // レポートが存在しない場合はnullを返す
+        }
         if (!response.ok) throw new Error('Failed to fetch user reports');
         return response.json();
     },
@@ -136,15 +144,19 @@ export const api = {
         return response.json();
     },
 
-    async createUser(auth, userId, email) {
+    async createUser(auth, userId, email, name = null) {
         const headers = await getAuthHeader(auth);
+        const body = { user_id: userId, email: email };
+        if (name) {
+            body.name = name;
+        }
         const response = await fetch(`${API_BASE_URL}/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 ...headers
             },
-            body: JSON.stringify({ user_id: userId, email: email }),
+            body: JSON.stringify(body),
         });
         if (!response.ok) throw new Error('Failed to create user');
         return response.json();
@@ -157,6 +169,39 @@ export const api = {
             headers: headers
         });
         if (!response.ok) throw new Error('Failed to delete curriculum');
+        return response.status === 204 ? {} : response.json();
+    },
+
+    async fetchDailyComments(auth, userId, dateString) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/comments/${dateString}`, {
+            headers: headers
+        });
+        if (!response.ok) throw new Error('Failed to fetch comments');
+        return response.json();
+    },
+
+    async createComment(auth, userId, data) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/users/${userId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to create comment');
+        return response.json();
+    },
+
+    async deleteComment(auth, commentId) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+        if (!response.ok) throw new Error('Failed to delete comment');
         return response.status === 204 ? {} : response.json();
     },
 };

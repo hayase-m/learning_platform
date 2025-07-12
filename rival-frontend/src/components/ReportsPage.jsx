@@ -5,51 +5,78 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 
 export default function ReportsPage({ user, onBack }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [reportData, setReportData] = useState(null)
-  const [userNotes, setUserNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [comments, setComments] = useState([])
+  const [newComment, setNewComment] = useState('')
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   useEffect(() => {
-    if (user && user.uid) {
-      fetchReport(selectedDate, user.uid);
-    }
+    const userId = user?.uid || 'sample_user_123';
+    fetchReport(selectedDate, userId);
   }, [selectedDate, user]);
 
   const fetchReport = async (date, userId) => {
     setLoading(true);
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatDate(date);
+    
+    setReportData(null);
+    setComments([]);
     
     try {
       const data = await api.fetchUserReports(auth, userId, dateString);
-      setReportData(data);
-      setUserNotes(data.user_notes || '');
+      if (data) {
+        setReportData(data);
+      }
+      
+      const commentsData = await api.fetchDailyComments(auth, userId, dateString);
+      setComments(commentsData || []);
     } catch (error) {
-      console.error('Error fetching report:', error);
+      console.error('Error fetching data:', error);
       setReportData(null);
-      setUserNotes('');
+      setComments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const saveUserNotes = async () => {
-    if (!reportData) return
+  const addComment = async () => {
+    if (!newComment.trim()) return;
     
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
-      await api.updateDailyReport(auth, user.uid, dateString, {
-        ...reportData,
-        user_notes: userNotes,
+      const userId = user?.uid || 'sample_user_123';
+      const dateString = formatDate(selectedDate);
+      const comment = await api.createComment(auth, userId, {
+        date: dateString,
+        comment_text: newComment
       });
+      setComments([comment, ...comments]);
+      setNewComment('');
     } catch (error) {
-      console.error('Error saving notes:', error);
+      console.error('Error adding comment:', error);
+      alert('コメントの追加に失敗しました。');
     }
-  }
+  };
+
+  const deleteComment = async (commentId) => {
+    try {
+      await api.deleteComment(auth, commentId);
+      setComments(comments.filter(c => c.comment_id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('コメントの削除に失敗しました。');
+    }
+  };
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
@@ -61,21 +88,8 @@ export default function ReportsPage({ user, onBack }) {
     return `${minutes}分`
   }
 
-  const generateMockTimeSeriesData = () => {
-    // Generate mock time series data for demonstration
-    const data = []
-    for (let hour = 9; hour <= 21; hour++) {
-      data.push({
-        time: `${hour}:00`,
-        score: Math.floor(Math.random() * 40) + 60 // 60-100 range
-      })
-    }
-    return data
-  }
-
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="outline"
@@ -92,7 +106,6 @@ export default function ReportsPage({ user, onBack }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Calendar Sidebar */}
         <div className="lg:col-span-1">
           <Card className="bg-card border">
             <CardHeader>
@@ -105,7 +118,7 @@ export default function ReportsPage({ user, onBack }) {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => date && setSelectedDate(new Date(date))}
                 className="text-card-foreground"
                 classNames={{
                   day_selected: "bg-purple-600 text-card-foreground",
@@ -116,7 +129,6 @@ export default function ReportsPage({ user, onBack }) {
           </Card>
         </div>
 
-        {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
           {loading ? (
             <Card className="bg-card border">
@@ -126,7 +138,6 @@ export default function ReportsPage({ user, onBack }) {
             </Card>
           ) : reportData ? (
             <>
-              {/* Summary Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
@@ -168,48 +179,6 @@ export default function ReportsPage({ user, onBack }) {
                 </Card>
               </div>
 
-              {/* Focus Score Chart */}
-              <Card className="bg-card border">
-                <CardHeader>
-                  <CardTitle className="text-card-foreground">時間帯別集中度推移</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={generateMockTimeSeriesData()}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="time" 
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                        />
-                        <YAxis 
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                          domain={[0, 100]}
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: '#1F2937',
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#8B5CF6" 
-                          strokeWidth={2}
-                          dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* AI Summary */}
               <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">AIライバルからの総評</CardTitle>
@@ -223,42 +192,106 @@ export default function ReportsPage({ user, onBack }) {
                 </CardContent>
               </Card>
 
-              {/* User Notes */}
               <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-card-foreground">メモ・振り返り</CardTitle>
+                  <CardTitle className="text-card-foreground">コメント</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    value={userNotes}
-                    onChange={(e) => setUserNotes(e.target.value)}
-                    placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
-                  />
-                  <Button
-                    onClick={saveUserNotes}
-                    className="bg-primary hover:bg-primary/90 text-card-foreground"
-                  >
-                    メモを保存
-                  </Button>
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="コメントを追加..."
+                      className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-16"
+                    />
+                    <Button
+                      onClick={addComment}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div key={comment.comment_id} className="bg-muted/30 p-3 rounded-lg flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-card-foreground">{comment.comment_text}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(comment.created_at).toLocaleString('ja-JP')}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => deleteComment(comment.comment_id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </>
           ) : (
-            <Card className="bg-card border">
-              <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground mb-4">
-                  選択した日付のレポートがありません
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  学習を開始してデータを蓄積してください
-                </div>
-              </CardContent>
-            </Card>
+            <>
+              <Card className="bg-card border">
+                <CardContent className="p-8 text-center">
+                  <div className="text-muted-foreground mb-4">
+                    選択した日付のレポートがありません
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    学習を開始してデータを蓄積してください
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border">
+                <CardHeader>
+                  <CardTitle className="text-card-foreground">コメント</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="コメントを追加..."
+                      className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-16"
+                    />
+                    <Button
+                      onClick={addComment}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div key={comment.comment_id} className="bg-muted/30 p-3 rounded-lg flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-card-foreground">{comment.comment_text}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(comment.created_at).toLocaleString('ja-JP')}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => deleteComment(comment.comment_id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </div>
     </div>
   )
 }
-

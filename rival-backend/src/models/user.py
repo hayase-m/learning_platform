@@ -6,6 +6,7 @@ db = SQLAlchemy()
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(128), unique=True, nullable=False)  # Firebase UID
+    name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     ai_personality = db.Column(db.String(50), default='厳しい')
@@ -20,6 +21,7 @@ class User(db.Model):
         return {
             'id': self.id,
             'user_id': self.user_id,
+            'name': self.name,
             'email': self.email,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'ai_personality': self.ai_personality,
@@ -60,6 +62,29 @@ class DailyReport(db.Model):
             'ai_summary': self.ai_summary,
             'user_notes': self.user_notes,
             'time_series_focus_data': json.loads(self.time_series_focus_data) if self.time_series_focus_data else [],
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class DailyReportComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.String(128), unique=True, nullable=False)
+    user_id = db.Column(db.String(128), nullable=False)
+    date = db.Column(db.String(10), nullable=False)  # YYYY-MM-DD format
+    comment_text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<DailyReportComment {self.comment_id}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'comment_id': self.comment_id,
+            'user_id': self.user_id,
+            'date': self.date,
+            'comment_text': self.comment_text,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
