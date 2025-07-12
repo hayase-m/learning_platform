@@ -13,9 +13,10 @@ import { API_BASE_URL } from '../config'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('') // パスワード用のstateを追加
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [isLogin, setIsLogin] = useState(true)
-  const [error, setError] = useState(null) // エラーメッセージ用のstateを追加
+  const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -34,9 +35,12 @@ export default function LoginPage() {
       const user = userCredential.user;
       const idToken = await user.getIdToken(); // ★重要: FirebaseからIDトークンを取得
 
-      // バックエンドに初回ログインを通知し、ユーザーDBに登録する
-      // 既に存在する場合はバックエンド側で何もしない想定
-      await api.createUser(auth, user.uid, user.email);
+      // バックエンドにユーザー情報を送信
+      if (isLogin) {
+        await api.createUser(auth, user.uid, user.email, 'ユーザー');
+      } else {
+        await api.createUser(auth, user.uid, user.email, name);
+      }
 
       // ログイン/登録が成功すると、App.jsxのonAuthStateChangedが検知して自動的にダッシュボードに遷移する
 
@@ -73,6 +77,23 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-foreground">
+                    ユーザー名
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="bg-input border text-foreground"
+                    placeholder="あなたの名前"
+                  />
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground">
                   メールアドレス
