@@ -30,22 +30,22 @@ function App() {
   switch (currentPage) {
     case 'reports':
       return (
-        <ReportsPage 
-          user={user} 
-          onBack={() => handleNavigate('dashboard')} 
+        <ReportsPage
+          user={user}
+          onBack={() => handleNavigate('dashboard')}
         />
       )
     case 'settings':
       return (
-        <SettingsPage 
-          user={user} 
-          onBack={() => handleNavigate('dashboard')} 
+        <SettingsPage
+          user={user}
+          onBack={() => handleNavigate('dashboard')}
         />
       )
     default:
       return (
-        <Dashboard 
-          user={user} 
+        <Dashboard
+          user={user}
           onLogout={handleLogout}
           onNavigate={handleNavigate}
         />

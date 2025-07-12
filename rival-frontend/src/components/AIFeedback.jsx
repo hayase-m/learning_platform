@@ -79,15 +79,15 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
   const getMessageStyle = (type) => {
     switch (type) {
       case 'critical':
-        return 'bg-red-500/20 border-red-500/50 text-red-300'
+        return 'bg-red-500/20 border-red-500/50 text-destructive'
       case 'warning':
         return 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300'
       case 'info':
         return 'bg-blue-500/20 border-blue-500/50 text-blue-300'
       case 'success':
-        return 'bg-green-500/20 border-green-500/50 text-green-300'
+        return 'bg-green-500/20 border-green-500/50 text-primary'
       default:
-        return 'bg-white/10 border-white/20 text-white'
+        return 'bg-card border text-card-foreground'
     }
   }
 
@@ -101,7 +101,7 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
   return (
     <Card className="bg-white/10 backdrop-blur-md border-white/20 h-full">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+        <CardTitle className="text-card-foreground flex items-center gap-2">
           <Bot className="w-5 h-5" />
           AIライバルからのメッセージ
         </CardTitle>
@@ -109,7 +109,7 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
       <CardContent>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="text-center text-slate-400 py-8">
+            <div className="text-center text-muted-foreground py-8">
               <MessageSquare className="w-8 h-8 mx-auto mb-2" />
               <p>学習を開始すると、AIライバルからのメッセージが表示されます</p>
             </div>
@@ -140,7 +140,7 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
         
         {messages.length > 0 && (
           <div className="mt-4 pt-4 border-t border-white/20">
-            <div className="text-xs text-slate-400 text-center">
+            <div className="text-xs text-muted-foreground text-center">
               最新のメッセージが上部に表示されます
             </div>
           </div>
