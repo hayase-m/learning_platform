@@ -219,16 +219,9 @@ export default function Dashboard({ user }) {
 
   if (showStartMenu) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-foreground mb-4 opacity-0 animate-[fadeInUp_1s_ease-out_forwards]">
-            AI Study Buddy <span className="text-primary">"Rival"</span>
-          </h1>
-          <p className="text-2xl text-muted-foreground opacity-0 animate-[fadeInUp_1s_ease-out_0.5s_forwards]">
-            バトルの準備をしています...
-          </p>
-        </div>
-        <style jsx>{`
+      <>
+        <style>{`
+          header { display: none !important; }
           @keyframes fadeInUp {
             from {
               opacity: 0;
@@ -240,7 +233,17 @@ export default function Dashboard({ user }) {
             }
           }
         `}</style>
-      </div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-6xl font-bold text-foreground mb-4 opacity-0 animate-[fadeInUp_1s_ease-out_forwards]">
+              AI Study Buddy <span className="text-primary">"Rival"</span>
+            </h1>
+            <p className="text-2xl text-muted-foreground opacity-0 animate-[fadeInUp_1s_ease-out_0.5s_forwards]">
+              バトルの準備をしています...
+            </p>
+          </div>
+        </div>
+      </>
     )
   }
 
