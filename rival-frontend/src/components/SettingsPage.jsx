@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge, User } from 'lucide-react'
+import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 import { Input } from '@/components/ui/input'
 
-export default function SettingsPage({ user, onBack }) {
+export default function SettingsPage({ user }) {
   const [settings, setSettings] = useState({
     name: '',
     ai_personality: '厳しい',
@@ -83,21 +84,7 @@ export default function SettingsPage({ user, onBack }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="text-foreground border hover:bg-card"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          ダッシュボードに戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">
-          設定
-        </h1>
-      </div>
+
 
       <div className="max-w-2xl mx-auto space-y-6">
         {/* User Profile Settings */}
@@ -282,7 +269,7 @@ export default function SettingsPage({ user, onBack }) {
           <Button
             onClick={saveSettings}
             disabled={saving}
-            className="bg-primary hover:bg-primary/90 text-foreground px-8"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
           >
             {saving ? '保存中...' : '設定を保存'}
           </Button>

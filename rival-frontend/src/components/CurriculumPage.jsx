@@ -31,6 +31,7 @@ export default function CurriculumPage({ user, onBack }) {
   const [activeTab, setActiveTab] = useState('create')
   const [curriculums, setCurriculums] = useState([])
   const [selectedCurriculum, setSelectedCurriculum] = useState(null)
+  const [selectedDay, setSelectedDay] = useState(null)
   const [loading, setLoading] = useState(false)
   const [generationStatus, setGenerationStatus] = useState(null)
   const [formData, setFormData] = useState({
@@ -39,14 +40,12 @@ export default function CurriculumPage({ user, onBack }) {
   })
 
   useEffect(() => {
-    // ユーザー情報が利用可能になってからカリキュラムを取得
     if (user && user.uid) {
       fetchCurriculums(user.uid);
       checkGenerationStatus();
     }
   }, [user]);
 
-  // 生成状態をチェック
   const checkGenerationStatus = () => {
     const status = localStorage.getItem('curriculumGenerationStatus');
     if (status) {
@@ -54,19 +53,16 @@ export default function CurriculumPage({ user, onBack }) {
       if (parsedStatus.isGenerating) {
         setGenerationStatus(parsedStatus);
         setLoading(true);
-        // 生成状態をポーリング
         pollGenerationStatus(parsedStatus.userId, parsedStatus.startTime);
       }
     }
   };
 
-  // 生成状態をポーリング
   const pollGenerationStatus = async (userId, startTime) => {
-    const maxWaitTime = 5 * 60 * 1000; // 5分
+    const maxWaitTime = 5 * 60 * 1000;
     const currentTime = Date.now();
     
     if (currentTime - startTime > maxWaitTime) {
-      // タイムアウト
       clearGenerationStatus();
       setLoading(false);
       alert('カリキュラム生成がタイムアウトしました。もう一度お試しください。');
@@ -74,43 +70,32 @@ export default function CurriculumPage({ user, onBack }) {
     }
 
     try {
-      console.log('Polling for new curriculum...');
       const data = await api.fetchCurriculums(auth, userId);
-      console.log('Current curriculums:', data.length);
-      
-      // 生成開始時刻以降に作成されたカリキュラムを探す
       const newCurriculum = data.find(c => {
         const createdTime = new Date(c.created_at).getTime();
-        return createdTime >= startTime - 1000; // 1秒のマージンを追加
+        return createdTime >= startTime - 1000;
       });
       
       if (newCurriculum) {
-        console.log('New curriculum found:', newCurriculum.title);
-        // 新しいカリキュラムが見つかった
         setCurriculums(data);
         clearGenerationStatus();
         setLoading(false);
         setActiveTab('list');
         alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
       } else {
-        console.log('Still generating, checking again in 3 seconds...');
-        // まだ生成中、再度チェック
         setTimeout(() => pollGenerationStatus(userId, startTime), 3000);
       }
     } catch (error) {
       console.error('Error polling generation status:', error);
-      // エラーが発生した場合も再試行
       setTimeout(() => pollGenerationStatus(userId, startTime), 5000);
     }
   };
 
-  // 生成状態をクリア
   const clearGenerationStatus = () => {
     localStorage.removeItem('curriculumGenerationStatus');
     setGenerationStatus(null);
   };
 
-  // カリキュラム一覧を取得
   const fetchCurriculums = async (userId) => {
     try {
       const data = await api.fetchCurriculums(auth, userId);
@@ -120,7 +105,6 @@ export default function CurriculumPage({ user, onBack }) {
     }
   };
 
-  // 進捗情報を取得
   const fetchProgress = async (curriculumId) => {
     try {
       const data = await api.fetchCurriculumProgress(auth, curriculumId);
@@ -131,7 +115,6 @@ export default function CurriculumPage({ user, onBack }) {
     return [];
   };
 
-  // 統計情報を取得
   const fetchStats = async (curriculumId) => {
     try {
       const data = await api.fetchCurriculumStats(auth, curriculumId);
@@ -142,7 +125,6 @@ export default function CurriculumPage({ user, onBack }) {
     return null;
   };
 
-  // カリキュラム生成
   const handleCreateCurriculum = async (e) => {
     e.preventDefault();
     if (!user || !user.uid) return;
@@ -150,7 +132,6 @@ export default function CurriculumPage({ user, onBack }) {
     setLoading(true);
     const startTime = Date.now();
     
-    // 生成状態を保存
     const status = {
       isGenerating: true,
       userId: user.uid,
@@ -161,11 +142,7 @@ export default function CurriculumPage({ user, onBack }) {
     setGenerationStatus(status);
 
     try {
-      console.log('Starting curriculum generation...');
       const newCurriculum = await api.createCurriculum(auth, user.uid, formData);
-      console.log('Curriculum generated successfully:', newCurriculum.title);
-      
-      // 成功時の処理
       setCurriculums(prev => [newCurriculum, ...prev]);
       setFormData({ goal: '', duration_days: 30 });
       clearGenerationStatus();
@@ -174,19 +151,14 @@ export default function CurriculumPage({ user, onBack }) {
       alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
     } catch (error) {
       console.error('Error creating curriculum:', error);
-      
-      // エラー時はポーリングで再試行
-      console.log('API call failed, starting polling...');
       pollGenerationStatus(user.uid, startTime);
     }
   }
 
-  // 日別タスクの完了状態を更新
   const handleToggleCompletion = async (curriculumId, day, completed) => {
     try {
       await api.updateCurriculumProgress(auth, curriculumId, day, { completed: !completed });
 
-      // 選択されたカリキュラムの進捗を更新
       if (selectedCurriculum && selectedCurriculum.curriculum_id === curriculumId) {
         const updatedProgress = await fetchProgress(curriculumId)
         const updatedStats = await fetchStats(curriculumId)
@@ -201,7 +173,6 @@ export default function CurriculumPage({ user, onBack }) {
     }
   }
 
-  // カリキュラム詳細を表示
   const handleViewCurriculum = async (curriculum) => {
     const progress = await fetchProgress(curriculum.curriculum_id)
     const stats = await fetchStats(curriculum.curriculum_id)
@@ -214,7 +185,6 @@ export default function CurriculumPage({ user, onBack }) {
     setActiveTab('view')
   }
 
-  // カリキュラム削除
   const handleDeleteCurriculum = async (curriculumId) => {
     if (!confirm('このカリキュラムを削除しますか？この操作は取り消せません。')) return;
 
@@ -231,13 +201,11 @@ export default function CurriculumPage({ user, onBack }) {
     }
   }
 
-  // カリキュラム完了
   const handleCompleteCurriculum = () => {
     alert('🎉 おめでとうございます！カリキュラムを完了しました！');
     setActiveTab('list');
   }
 
-  // タスク選択
   const handleSelectTask = (curriculum, plan) => {
     const selectedTask = {
       curriculumId: curriculum.curriculum_id,
@@ -249,6 +217,7 @@ export default function CurriculumPage({ user, onBack }) {
       selectedAt: new Date().toISOString()
     };
     localStorage.setItem('selectedTask', JSON.stringify(selectedTask));
+    setSelectedDay(plan.day);
     alert(`第${plan.day}日目のタスクを選択しました: ${plan.title}`);
   }
 
@@ -258,7 +227,6 @@ export default function CurriculumPage({ user, onBack }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="outline"
@@ -291,9 +259,8 @@ export default function CurriculumPage({ user, onBack }) {
           </TabsTrigger>
         </TabsList>
 
-        {/* カリキュラム作成タブ */}
         <TabsContent value="create" className="space-y-6">
-          <Card className="bg-card border border">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Target className="w-5 h-5" />
@@ -423,7 +390,6 @@ export default function CurriculumPage({ user, onBack }) {
           </Card>
         </TabsContent>
 
-        {/* カリキュラム一覧タブ */}
         <TabsContent value="list" className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-foreground">カリキュラム一覧</h2>
@@ -439,7 +405,7 @@ export default function CurriculumPage({ user, onBack }) {
           </div>
           <div className="grid gap-4">
             {curriculums.length === 0 ? (
-              <Card className="bg-card border border">
+              <Card className="bg-card border">
                 <CardContent className="p-6 text-center">
                   <BookOpen className="w-12 h-12 mx-auto mb-4 text-foreground/50" />
                   <p className="text-foreground/70">まだカリキュラムがありません</p>
@@ -448,7 +414,7 @@ export default function CurriculumPage({ user, onBack }) {
               </Card>
             ) : (
               curriculums.map((curriculum) => (
-                <Card key={curriculum.curriculum_id} className="bg-card border border">
+                <Card key={curriculum.curriculum_id} className="bg-card border">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -470,7 +436,7 @@ export default function CurriculumPage({ user, onBack }) {
                           onClick={() => handleViewCurriculum(curriculum)}
                           variant="outline"
                           size="sm"
-                          className="text-white border-white/20 hover:bg-white/10"
+                          className="text-foreground border hover:bg-accent"
                         >
                           詳細を見る
                         </Button>
@@ -491,17 +457,15 @@ export default function CurriculumPage({ user, onBack }) {
           </div>
         </TabsContent>
 
-        {/* カリキュラム詳細タブ */}
         <TabsContent value="view" className="space-y-6">
           {selectedCurriculum && (
             <>
-              {/* 完了通知 */}
               {selectedCurriculum.stats?.completion_rate === 100 && (
                 <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border-green-400/30">
                   <CardContent className="p-6 text-center">
                     <PartyPopper className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
-                    <h3 className="text-xl font-bold text-white mb-2">🎉 カリキュラム完了！</h3>
-                    <p className="text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
+                    <h3 className="text-xl font-bold text-foreground mb-2">🎉 カリキュラム完了！</h3>
+                    <p className="text-foreground/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
                     <Button
                       onClick={handleCompleteCurriculum}
                       className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold"
@@ -513,10 +477,9 @@ export default function CurriculumPage({ user, onBack }) {
                 </Card>
               )}
 
-              {/* カリキュラム概要 */}
-              <Card className="bg-card border border">
+              <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="text-foreground flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Target className="w-5 h-5" />
                       {selectedCurriculum.title}
@@ -535,7 +498,6 @@ export default function CurriculumPage({ user, onBack }) {
                 <CardContent className="space-y-4">
                   <p className="text-foreground/90">{selectedCurriculum.overview}</p>
 
-                  {/* 進捗統計 */}
                   {selectedCurriculum.stats && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
@@ -557,7 +519,6 @@ export default function CurriculumPage({ user, onBack }) {
                     </div>
                   )}
 
-                  {/* 進捗バー */}
                   {selectedCurriculum.stats && (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm text-foreground/70">
@@ -570,8 +531,7 @@ export default function CurriculumPage({ user, onBack }) {
                 </CardContent>
               </Card>
 
-              {/* 日別カリキュラム */}
-              <Card className="bg-card border border">
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-foreground flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
@@ -586,7 +546,7 @@ export default function CurriculumPage({ user, onBack }) {
 
                       return (
                         <AccordionItem key={plan.day} value={`day-${plan.day}`}>
-                          <AccordionTrigger className="text-foreground hover:text-foreground/80">
+                          <AccordionTrigger className={`text-foreground hover:text-foreground/80 ${selectedDay === plan.day ? 'bg-primary/20 border-l-4 border-primary' : ''}`}>
                             <div className="flex items-center gap-3 w-full">
                               <div className="flex gap-2">
                                 <Button
@@ -601,7 +561,7 @@ export default function CurriculumPage({ user, onBack }) {
                                   {isCompleted ? (
                                     <CheckCircle2 className="w-5 h-5 text-green-400" />
                                   ) : (
-                                    <Circle className="w-5 h-5 text-white/50" />
+                                    <Circle className="w-5 h-5 text-foreground/50" />
                                   )}
                                 </Button>
                                 {!isCompleted && (
@@ -628,7 +588,6 @@ export default function CurriculumPage({ user, onBack }) {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="text-foreground/90 space-y-4">
-                            {/* 学習目標 */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習目標</h4>
                               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -638,7 +597,6 @@ export default function CurriculumPage({ user, onBack }) {
                               </ul>
                             </div>
 
-                            {/* 学習トピック */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習トピック</h4>
                               <div className="flex flex-wrap gap-2">
@@ -650,7 +608,6 @@ export default function CurriculumPage({ user, onBack }) {
                               </div>
                             </div>
 
-                            {/* 学習活動 */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習活動</h4>
                               <div className="space-y-2">
@@ -669,7 +626,6 @@ export default function CurriculumPage({ user, onBack }) {
                               </div>
                             </div>
 
-                            {/* リソース */}
                             {plan.resources && plan.resources.length > 0 && (
                               <div>
                                 <h4 className="font-medium text-foreground mb-2">参考リソース</h4>
@@ -681,7 +637,6 @@ export default function CurriculumPage({ user, onBack }) {
                               </div>
                             )}
 
-                            {/* 評価・宿題 */}
                             <div className="grid md:grid-cols-2 gap-4">
                               <div>
                                 <h4 className="font-medium text-foreground mb-2">評価方法</h4>
@@ -700,9 +655,8 @@ export default function CurriculumPage({ user, onBack }) {
                 </CardContent>
               </Card>
 
-              {/* マイルストーン */}
               {selectedCurriculum.curriculum_data.milestones && selectedCurriculum.curriculum_data.milestones.length > 0 && (
-                <Card className="bg-card border border">
+                <Card className="bg-card border">
                   <CardHeader>
                     <CardTitle className="text-foreground flex items-center gap-2">
                       <Trophy className="w-5 h-5" />
