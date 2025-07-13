@@ -1,12 +1,13 @@
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
 import { Button } from './ui/button'
-import { Menu, Home, BookOpen, BarChart3, Settings, LogOut } from 'lucide-react'
+import { Menu, Home, BookOpen, BarChart3, Settings, LogOut, Trophy } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
 export default function Header({ user, isDrawerOpen, setIsDrawerOpen, location, handleNavigation, handleLogout }) {
   const navigationItems = [
     { path: '/', label: 'ダッシュボード', icon: Home },
     { path: '/curriculum', label: 'カリキュラム', icon: BookOpen },
+    { path: '/ranking', label: 'ランキング', icon: Trophy },
     { path: '/reports', label: 'レポート', icon: BarChart3 },
     { path: '/settings', label: '設定', icon: Settings },
   ]

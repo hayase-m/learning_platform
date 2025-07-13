@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import ReportsPage from './components/ReportsPage';
 import SettingsPage from './components/SettingsPage';
 import CurriculumPage from './components/CurriculumPage';
+import RankingPage from './components/RankingPage';
 import Header from './components/Header';
 import './App.css';
 
@@ -77,6 +78,10 @@ function App() {
               <Route
                 path="/settings"
                 element={<SettingsPage user={user} />}
+              />
+              <Route
+                path="/ranking"
+                element={<RankingPage user={user} onBack={() => navigate('/')} />}
               />
             </>
           )}

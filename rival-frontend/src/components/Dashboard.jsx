@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat, Clock } from 'lucide-react'
+import { Play, Pause, Square, Settings, BarChart3, Camera, CameraOff, BookOpen, Repeat, Clock, Trophy } from 'lucide-react'
 import FocusMonitor from './FocusMonitor'
 import ThemeToggle from './ThemeToggle'
 import { api } from '../api'
@@ -550,13 +550,43 @@ export default function Dashboard({ user }) {
             </Card>
           ) : (
             <Card className="bg-card border">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-6 text-center space-y-4">
                 <BookOpen 
                   className="w-12 h-12 mx-auto mb-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => navigate('/curriculum')}
                 />
                 <p className="text-muted-foreground">タスクが選択されていません</p>
                 <p className="text-muted-foreground/70 text-sm">カリキュラムからタスクを選択してください</p>
+                
+                <div className="pt-4 border-t border-border space-y-2">
+                  <Button
+                    onClick={() => navigate('/ranking')}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-foreground border hover:bg-accent"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    ランキングを見る
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/reports')}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-foreground border hover:bg-accent"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    レポートを見る
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/settings')}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-foreground border hover:bg-accent"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    設定
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
