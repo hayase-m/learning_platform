@@ -32,6 +32,7 @@ export default function CurriculumPage({ user, onBack }) {
   const [curriculums, setCurriculums] = useState([])
   const [selectedCurriculum, setSelectedCurriculum] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [generationStatus, setGenerationStatus] = useState(null)
   const [formData, setFormData] = useState({
     goal: '',
     duration_days: 30
@@ -41,8 +42,73 @@ export default function CurriculumPage({ user, onBack }) {
     // ユーザー情報が利用可能になってからカリキュラムを取得
     if (user && user.uid) {
       fetchCurriculums(user.uid);
+      checkGenerationStatus();
     }
-  }, [user]); // userオブジェクトの変更を監視
+  }, [user]);
+
+  // 生成状態をチェック
+  const checkGenerationStatus = () => {
+    const status = localStorage.getItem('curriculumGenerationStatus');
+    if (status) {
+      const parsedStatus = JSON.parse(status);
+      if (parsedStatus.isGenerating) {
+        setGenerationStatus(parsedStatus);
+        setLoading(true);
+        // 生成状態をポーリング
+        pollGenerationStatus(parsedStatus.userId, parsedStatus.startTime);
+      }
+    }
+  };
+
+  // 生成状態をポーリング
+  const pollGenerationStatus = async (userId, startTime) => {
+    const maxWaitTime = 5 * 60 * 1000; // 5分
+    const currentTime = Date.now();
+    
+    if (currentTime - startTime > maxWaitTime) {
+      // タイムアウト
+      clearGenerationStatus();
+      setLoading(false);
+      alert('カリキュラム生成がタイムアウトしました。もう一度お試しください。');
+      return;
+    }
+
+    try {
+      console.log('Polling for new curriculum...');
+      const data = await api.fetchCurriculums(auth, userId);
+      console.log('Current curriculums:', data.length);
+      
+      // 生成開始時刻以降に作成されたカリキュラムを探す
+      const newCurriculum = data.find(c => {
+        const createdTime = new Date(c.created_at).getTime();
+        return createdTime >= startTime - 1000; // 1秒のマージンを追加
+      });
+      
+      if (newCurriculum) {
+        console.log('New curriculum found:', newCurriculum.title);
+        // 新しいカリキュラムが見つかった
+        setCurriculums(data);
+        clearGenerationStatus();
+        setLoading(false);
+        setActiveTab('list');
+        alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
+      } else {
+        console.log('Still generating, checking again in 3 seconds...');
+        // まだ生成中、再度チェック
+        setTimeout(() => pollGenerationStatus(userId, startTime), 3000);
+      }
+    } catch (error) {
+      console.error('Error polling generation status:', error);
+      // エラーが発生した場合も再試行
+      setTimeout(() => pollGenerationStatus(userId, startTime), 5000);
+    }
+  };
+
+  // 生成状態をクリア
+  const clearGenerationStatus = () => {
+    localStorage.removeItem('curriculumGenerationStatus');
+    setGenerationStatus(null);
+  };
 
   // カリキュラム一覧を取得
   const fetchCurriculums = async (userId) => {
@@ -82,17 +148,36 @@ export default function CurriculumPage({ user, onBack }) {
     if (!user || !user.uid) return;
 
     setLoading(true);
+    const startTime = Date.now();
+    
+    // 生成状態を保存
+    const status = {
+      isGenerating: true,
+      userId: user.uid,
+      startTime: startTime,
+      goal: formData.goal
+    };
+    localStorage.setItem('curriculumGenerationStatus', JSON.stringify(status));
+    setGenerationStatus(status);
 
     try {
+      console.log('Starting curriculum generation...');
       const newCurriculum = await api.createCurriculum(auth, user.uid, formData);
+      console.log('Curriculum generated successfully:', newCurriculum.title);
+      
+      // 成功時の処理
       setCurriculums(prev => [newCurriculum, ...prev]);
       setFormData({ goal: '', duration_days: 30 });
+      clearGenerationStatus();
+      setLoading(false);
       setActiveTab('list');
+      alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
     } catch (error) {
       console.error('Error creating curriculum:', error);
-      alert(`カリキュラムの生成に失敗しました: ${error.message}`);
-    } finally {
-      setLoading(false);
+      
+      // エラー時はポーリングで再試行
+      console.log('API call failed, starting polling...');
+      pollGenerationStatus(user.uid, startTime);
     }
   }
 
@@ -293,6 +378,46 @@ export default function CurriculumPage({ user, onBack }) {
                     </>
                   )}
                 </Button>
+                
+                {loading && generationStatus && (
+                  <div className="mt-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                      <span className="text-blue-400 font-medium">生成中</span>
+                    </div>
+                    <p className="text-sm text-foreground/70 mb-2">
+                      目標: {generationStatus.goal}
+                    </p>
+                    <p className="text-xs text-foreground/50">
+                      AIがカリキュラムを作成しています。しばらくお待ちください...
+                    </p>
+                    <p className="text-xs text-foreground/40 mt-2">
+                      ※ 他のページに移動しても生成は継続されます
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        onClick={() => {
+                          clearGenerationStatus();
+                          setLoading(false);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-400 border-red-400/20 hover:bg-red-400/10"
+                      >
+                        キャンセル
+                      </Button>
+                      <Button
+                        onClick={() => user && user.uid && fetchCurriculums(user.uid)}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-400 border-blue-400/20 hover:bg-blue-400/10"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        状態確認
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </form>
             </CardContent>
           </Card>
@@ -300,6 +425,18 @@ export default function CurriculumPage({ user, onBack }) {
 
         {/* カリキュラム一覧タブ */}
         <TabsContent value="list" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-foreground">カリキュラム一覧</h2>
+            <Button
+              onClick={() => user && user.uid && fetchCurriculums(user.uid)}
+              variant="outline"
+              size="sm"
+              className="text-foreground border hover:bg-accent"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              更新
+            </Button>
+          </div>
           <div className="grid gap-4">
             {curriculums.length === 0 ? (
               <Card className="bg-card border border">
