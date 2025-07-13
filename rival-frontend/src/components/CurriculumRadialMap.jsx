@@ -26,17 +26,19 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
 
     const dailyPlan = curriculum.curriculum_data.daily_plan.slice(1) // Skip day 1 (center node)
     const totalDays = dailyPlan.length
-    const orbits = Math.ceil(totalDays / 4) // 3-4 nodes per orbit
+    
+    // Dynamic nodes per orbit based on total days
+    const nodesPerOrbit = totalDays <= 12 ? 4 : totalDays <= 20 ? 6 : 8
 
     return dailyPlan.map((day, index) => {
-      const orbitIndex = Math.floor(index / 4)
-      const nodeIndexInOrbit = index % 4
+      const orbitIndex = Math.floor(index / nodesPerOrbit)
+      const nodeIndexInOrbit = index % nodesPerOrbit
       const orbitRadius = 100 + orbitIndex * 60
 
       // Different orbital speeds for each orbit (inner orbits faster)
       const orbitSpeed = 1 / (orbitIndex + 1)
       const orbitRotation = orbitIndex * (Math.PI / 6)
-      const angle = (2 * Math.PI * nodeIndexInOrbit) / 4 + orbitRotation + (time * orbitSpeed)
+      const angle = (2 * Math.PI * nodeIndexInOrbit) / nodesPerOrbit + orbitRotation + (time * orbitSpeed)
 
       const dayProgress = progress.find(p => p.day === day.day)
       const isCompleted = dayProgress?.completed || false
@@ -56,7 +58,8 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
   const orbits = useMemo(() => {
     if (!curriculum?.curriculum_data?.daily_plan) return []
     const totalDays = curriculum.curriculum_data.daily_plan.length - 1 // Exclude day 1
-    const orbitCount = Math.ceil(totalDays / 4)
+    const nodesPerOrbit = totalDays <= 12 ? 4 : totalDays <= 20 ? 6 : 8
+    const orbitCount = Math.ceil(totalDays / nodesPerOrbit)
     const { width, height } = dimensions
     const centerX = width / 2
     const centerY = height / 2
