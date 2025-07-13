@@ -144,15 +144,19 @@ export const api = {
         return response.json();
     },
 
-    async createUser(auth, userId, email) {
+    async createUser(auth, userId, email, name = null) {
         const headers = await getAuthHeader(auth);
+        const body = { user_id: userId, email: email };
+        if (name) {
+            body.name = name;
+        }
         const response = await fetch(`${API_BASE_URL}/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 ...headers
             },
-            body: JSON.stringify({ user_id: userId, email: email }),
+            body: JSON.stringify(body),
         });
         if (!response.ok) throw new Error('Failed to create user');
         return response.json();
