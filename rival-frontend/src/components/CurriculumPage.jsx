@@ -100,6 +100,7 @@ export default function CurriculumPage({ user }) {
         setCurriculums(data);
         clearGenerationStatus();
         setLoading(false);
+        setFormData({ goal: '', duration_days: 30 });
         setActiveTab('list');
         alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
       }
