@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { auth } from './firebase'; // Firebase authをインポート
 import { onAuthStateChanged } from 'firebase/auth';
 import LoginPage from './components/LoginPage';
@@ -7,12 +7,15 @@ import Dashboard from './components/Dashboard';
 import ReportsPage from './components/ReportsPage';
 import SettingsPage from './components/SettingsPage';
 import CurriculumPage from './components/CurriculumPage';
+import Header from './components/Header';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // 認証状態の確認中フラグ
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Firebaseの認証状態の変更を監視
@@ -35,31 +38,51 @@ function App() {
     return <div>Loading...</div>; // ここは適切なローディング画面にできる
   }
 
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsDrawerOpen(false);
+  };
+
   return (
-    <Routes>
-      {!user ? (
-        <Route path="/*" element={<LoginPage />} />
-      ) : (
-        <>
-          <Route
-            path="/"
-            element={<Dashboard user={user} onLogout={handleLogout} />}
-          />
-          <Route
-            path="/curriculum"
-            element={<CurriculumPage user={user} onBack={() => navigate('/')} />}
-          />
-          <Route
-            path="/reports"
-            element={<ReportsPage user={user} onBack={() => navigate('/')} />}
-          />
-          <Route
-            path="/settings"
-            element={<SettingsPage user={user} onBack={() => navigate('/')} />}
-          />
-        </>
+    <div className="min-h-screen bg-background">
+      {user && (
+        <Header 
+          user={user}
+          isDrawerOpen={isDrawerOpen}
+          setIsDrawerOpen={setIsDrawerOpen}
+          location={location}
+          handleNavigation={handleNavigation}
+          handleLogout={handleLogout}
+        />
       )}
-    </Routes>
+      
+      <div className={user ? "pt-16" : ""}>
+        <Routes>
+          {!user ? (
+            <Route path="/*" element={<LoginPage />} />
+          ) : (
+            <>
+              <Route
+                path="/"
+                element={<Dashboard user={user} />}
+              />
+              <Route
+                path="/curriculum"
+                element={<CurriculumPage user={user} />}
+              />
+              <Route
+                path="/reports"
+                element={<ReportsPage user={user} />}
+              />
+              <Route
+                path="/settings"
+                element={<SettingsPage user={user} />}
+              />
+            </>
+          )}
+        </Routes>
+      </div>
+    </div>
   );
 }
 

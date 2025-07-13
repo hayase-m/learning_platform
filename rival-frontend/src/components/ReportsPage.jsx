@@ -29,16 +29,16 @@ export default function ReportsPage({ user, onBack }) {
   const fetchReport = async (date, userId) => {
     setLoading(true);
     const dateString = formatDate(date);
-    
+
     setReportData(null);
     setComments([]);
-    
+
     try {
       const data = await api.fetchUserReports(auth, userId, dateString);
       if (data) {
         setReportData(data);
       }
-      
+
       const commentsData = await api.fetchDailyComments(auth, userId, dateString);
       setComments(commentsData || []);
     } catch (error) {
@@ -52,7 +52,7 @@ export default function ReportsPage({ user, onBack }) {
 
   const addComment = async () => {
     if (!newComment.trim()) return;
-    
+
     try {
       const userId = user?.uid || 'sample_user_123';
       const dateString = formatDate(selectedDate);
@@ -81,7 +81,7 @@ export default function ReportsPage({ user, onBack }) {
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
-    
+
     if (hours > 0) {
       return `${hours}時間${minutes}分`
     }
@@ -90,20 +90,7 @@ export default function ReportsPage({ user, onBack }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="text-foreground border hover:bg-accent"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          ダッシュボードに戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">
-          学習レポート
-        </h1>
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
@@ -148,7 +135,7 @@ export default function ReportsPage({ user, onBack }) {
                     <div className="text-sm text-muted-foreground">総学習時間</div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <Target className="w-8 h-8 text-primary mx-auto mb-2" />
@@ -158,7 +145,7 @@ export default function ReportsPage({ user, onBack }) {
                     <div className="text-sm text-muted-foreground">集中時間</div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <div className="text-2xl font-bold text-foreground">
@@ -167,7 +154,7 @@ export default function ReportsPage({ user, onBack }) {
                     <div className="text-sm text-muted-foreground">平均集中スコア</div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />

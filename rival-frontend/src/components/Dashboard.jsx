@@ -16,7 +16,7 @@ import { auth } from '../firebase'
 const WORK_DURATION = 25 * 60; // 25 minutes in seconds
 const BREAK_DURATION = 5 * 60; // 5 minutes in seconds
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard({ user }) {
   const navigate = useNavigate()
   const [showStartMenu, setShowStartMenu] = useState(!sessionStorage.getItem('hasSeenIntro'))
   const [isStudying, setIsStudying] = useState(false)
@@ -246,53 +246,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          AI Study Buddy <span className="text-primary">"Rival"</span>
-        </h1>
-        <div className="flex gap-2">
-          <ThemeToggle />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/curriculum')}
-            className="text-card-foreground border hover:bg-card"
-          >
-            <BookOpen className="w-4 h-4 mr-2" />
-            カリキュラム
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/reports')}
-            className="text-card-foreground border hover:bg-card"
-          >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            レポート
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/settings')}
-            className="text-card-foreground border hover:bg-card"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            設定
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              sessionStorage.removeItem('hasSeenIntro')
-              onLogout()
-            }}
-            className="text-destructive border-destructive hover:bg-card"
-          >
-            ログアウト
-          </Button>
-        </div>
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Sidebar - Controls and Stats */}
@@ -464,7 +418,7 @@ export default function Dashboard({ user, onLogout }) {
                     }}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 border"
                   >
                     クリア
                   </Button>
@@ -597,7 +551,10 @@ export default function Dashboard({ user, onLogout }) {
           ) : (
             <Card className="bg-card border">
               <CardContent className="p-6 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <BookOpen 
+                  className="w-12 h-12 mx-auto mb-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => navigate('/curriculum')}
+                />
                 <p className="text-muted-foreground">タスクが選択されていません</p>
                 <p className="text-muted-foreground/70 text-sm">カリキュラムからタスクを選択してください</p>
               </CardContent>

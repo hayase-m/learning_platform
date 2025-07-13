@@ -26,11 +26,14 @@ import {
   PartyPopper,
   Play
 } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
+import CurriculumRadialMap from './CurriculumRadialMap'
 
-export default function CurriculumPage({ user, onBack }) {
+export default function CurriculumPage({ user }) {
   const [activeTab, setActiveTab] = useState('create')
   const [curriculums, setCurriculums] = useState([])
   const [selectedCurriculum, setSelectedCurriculum] = useState(null)
+  const [selectedDay, setSelectedDay] = useState(null)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     goal: '',
@@ -126,7 +129,6 @@ export default function CurriculumPage({ user, onBack }) {
       progress: progress,
       stats: stats
     })
-    setActiveTab('view')
   }
 
   // カリキュラム削除
@@ -149,7 +151,7 @@ export default function CurriculumPage({ user, onBack }) {
   // カリキュラム完了
   const handleCompleteCurriculum = () => {
     alert('🎉 おめでとうございます！カリキュラムを完了しました！');
-    setActiveTab('list');
+    setSelectedCurriculum(null);
   }
 
   // タスク選択
@@ -173,25 +175,10 @@ export default function CurriculumPage({ user, onBack }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="text-foreground border hover:bg-accent"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">
-          <BookOpen className="w-6 h-6 inline mr-2" />
-          学習カリキュラム
-        </h1>
-      </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-card border">
+        <TabsList className="grid w-full grid-cols-2 bg-card border">
           <TabsTrigger value="create" className="text-foreground data-[state=active]:bg-accent">
             <Plus className="w-4 h-4 mr-2" />
             新規作成
@@ -200,15 +187,11 @@ export default function CurriculumPage({ user, onBack }) {
             <BookOpen className="w-4 h-4 mr-2" />
             カリキュラム一覧
           </TabsTrigger>
-          <TabsTrigger value="view" className="text-foreground data-[state=active]:bg-accent" disabled={!selectedCurriculum}>
-            <Target className="w-4 h-4 mr-2" />
-            詳細表示
-          </TabsTrigger>
         </TabsList>
 
         {/* カリキュラム作成タブ */}
         <TabsContent value="create" className="space-y-6">
-          <Card className="bg-card border border">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Target className="w-5 h-5" />
@@ -239,9 +222,9 @@ export default function CurriculumPage({ user, onBack }) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.max(prev.duration_days - 7, 7) }))}
+                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.max(prev.duration_days - 1, 1) }))}
                       className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
-                      disabled={formData.duration_days <= 7}
+                      disabled={formData.duration_days <= 1}
                     >
                       -
                     </Button>
@@ -254,15 +237,15 @@ export default function CurriculumPage({ user, onBack }) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.min(prev.duration_days + 7, 60) }))}
+                      onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.min(prev.duration_days + 1, 30) }))}
                       className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
-                      disabled={formData.duration_days >= 60}
+                      disabled={formData.duration_days >= 30}
                     >
                       +
                     </Button>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    {[14, 21, 30, 45].map(days => (
+                    {[7, 14, 21, 30].map(days => (
                       <Button
                         key={days}
                         type="button"
@@ -300,71 +283,24 @@ export default function CurriculumPage({ user, onBack }) {
 
         {/* カリキュラム一覧タブ */}
         <TabsContent value="list" className="space-y-6">
-          <div className="grid gap-4">
-            {curriculums.length === 0 ? (
-              <Card className="bg-card border border">
-                <CardContent className="p-6 text-center">
-                  <BookOpen className="w-12 h-12 mx-auto mb-4 text-foreground/50" />
-                  <p className="text-foreground/70">まだカリキュラムがありません</p>
-                  <p className="text-foreground/50 text-sm">「新規作成」タブから最初のカリキュラムを作成しましょう</p>
-                </CardContent>
-              </Card>
-            ) : (
-              curriculums.map((curriculum) => (
-                <Card key={curriculum.curriculum_id} className="bg-card border border">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-foreground text-lg">{curriculum.title}</CardTitle>
-                        <p className="text-foreground/70 text-sm mt-1">{curriculum.goal}</p>
-                      </div>
-                      <Badge variant="secondary" className="ml-2">
-                        {curriculum.duration_days}日間
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-foreground/70">
-                        作成日: {formatDate(curriculum.created_at)}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleViewCurriculum(curriculum)}
-                          variant="outline"
-                          size="sm"
-                          className="text-white border-white/20 hover:bg-white/10"
-                        >
-                          詳細を見る
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteCurriculum(curriculum.curriculum_id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-400 border-red-400/20 hover:bg-red-400/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        {/* カリキュラム詳細タブ */}
-        <TabsContent value="view" className="space-y-6">
           {selectedCurriculum && (
-            <>
-              {/* 完了通知 */}
+            <div className="mb-6">
+              <Button
+                onClick={() => setSelectedCurriculum(null)}
+                variant="outline"
+                size="sm"
+                className="mb-4 border"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                一覧に戻る
+              </Button>
+              {/* 詳細表示内容をここに移動 */}
               {selectedCurriculum.stats?.completion_rate === 100 && (
-                <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border-green-400/30">
+                <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border-green-400/30 mb-6">
                   <CardContent className="p-6 text-center">
                     <PartyPopper className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
-                    <h3 className="text-xl font-bold text-white mb-2">🎉 カリキュラム完了！</h3>
-                    <p className="text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">🎉 カリキュラム完了！</h3>
+                    <p className="text-gray-700 dark:text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
                     <Button
                       onClick={handleCompleteCurriculum}
                       className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold"
@@ -375,11 +311,9 @@ export default function CurriculumPage({ user, onBack }) {
                   </CardContent>
                 </Card>
               )}
-
-              {/* カリキュラム概要 */}
-              <Card className="bg-card border border">
+              <Card className="bg-card border mb-6">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center justify-between">
+                  <CardTitle className="text-foreground flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Target className="w-5 h-5" />
                       {selectedCurriculum.title}
@@ -397,8 +331,6 @@ export default function CurriculumPage({ user, onBack }) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-foreground/90">{selectedCurriculum.overview}</p>
-
-                  {/* 進捗統計 */}
                   {selectedCurriculum.stats && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
@@ -419,22 +351,46 @@ export default function CurriculumPage({ user, onBack }) {
                       </div>
                     </div>
                   )}
-
-                  {/* 進捗バー */}
-                  {selectedCurriculum.stats && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm text-foreground/70">
-                        <span>進捗</span>
-                        <span>{selectedCurriculum.stats.completion_rate}%</span>
-                      </div>
-                      <Progress value={selectedCurriculum.stats.completion_rate} className="w-full" />
-                    </div>
+                  {selectedCurriculum.curriculum_data.milestones && selectedCurriculum.curriculum_data.milestones.length > 0 && (
+                    <Card className="bg-card border">
+                      <CardHeader>
+                        <CardTitle className="text-foreground flex items-center gap-2">
+                          <Trophy className="w-5 h-5" />
+                          マイルストーン
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {selectedCurriculum.curriculum_data.milestones.map((milestone, index) => (
+                            <div key={index} className="bg-muted/50 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Trophy className="w-4 h-4 text-yellow-400" />
+                                <span className="font-medium text-foreground">第{milestone.day}日目: {milestone.title}</span>
+                              </div>
+                              <p className="text-sm text-foreground/70">{milestone.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
+                  <CurriculumRadialMap
+                    curriculum={selectedCurriculum}
+                    progress={selectedCurriculum.progress || []}
+                    onProgressUpdate={async () => {
+                      const updatedProgress = await fetchProgress(selectedCurriculum.curriculum_id)
+                      const updatedStats = await fetchStats(selectedCurriculum.curriculum_id)
+                      setSelectedCurriculum(prev => ({
+                        ...prev,
+                        progress: updatedProgress,
+                        stats: updatedStats
+                      }))
+                    }}
+                    onDaySelect={setSelectedDay}
+                  />
                 </CardContent>
               </Card>
-
-              {/* 日別カリキュラム */}
-              <Card className="bg-card border border">
+              <Card className="bg-card border mb-6">
                 <CardHeader>
                   <CardTitle className="text-foreground flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
@@ -446,10 +402,9 @@ export default function CurriculumPage({ user, onBack }) {
                     {selectedCurriculum.curriculum_data.daily_plan?.map((plan) => {
                       const progress = selectedCurriculum.progress?.find(p => p.day === plan.day)
                       const isCompleted = progress?.completed || false
-
                       return (
                         <AccordionItem key={plan.day} value={`day-${plan.day}`}>
-                          <AccordionTrigger className="text-foreground hover:text-foreground/80">
+                          <AccordionTrigger className={`text-foreground hover:text-foreground/80 ${selectedDay === plan.day ? 'bg-primary/20 border-l-4 border-primary' : ''}`}>
                             <div className="flex items-center gap-3 w-full">
                               <div className="flex gap-2">
                                 <Button
@@ -491,7 +446,6 @@ export default function CurriculumPage({ user, onBack }) {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="text-foreground/90 space-y-4">
-                            {/* 学習目標 */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習目標</h4>
                               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -500,8 +454,6 @@ export default function CurriculumPage({ user, onBack }) {
                                 ))}
                               </ul>
                             </div>
-
-                            {/* 学習トピック */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習トピック</h4>
                               <div className="flex flex-wrap gap-2">
@@ -512,8 +464,6 @@ export default function CurriculumPage({ user, onBack }) {
                                 ))}
                               </div>
                             </div>
-
-                            {/* 学習活動 */}
                             <div>
                               <h4 className="font-medium text-foreground mb-2">学習活動</h4>
                               <div className="space-y-2">
@@ -531,8 +481,6 @@ export default function CurriculumPage({ user, onBack }) {
                                 ))}
                               </div>
                             </div>
-
-                            {/* リソース */}
                             {plan.resources && plan.resources.length > 0 && (
                               <div>
                                 <h4 className="font-medium text-foreground mb-2">参考リソース</h4>
@@ -543,9 +491,7 @@ export default function CurriculumPage({ user, onBack }) {
                                 </ul>
                               </div>
                             )}
-
-                            {/* 評価・宿題 */}
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid gap-4">
                               <div>
                                 <h4 className="font-medium text-foreground mb-2">評価方法</h4>
                                 <p className="text-sm text-foreground/70">{plan.assessment}</p>
@@ -563,34 +509,69 @@ export default function CurriculumPage({ user, onBack }) {
                 </CardContent>
               </Card>
 
-              {/* マイルストーン */}
-              {selectedCurriculum.curriculum_data.milestones && selectedCurriculum.curriculum_data.milestones.length > 0 && (
-                <Card className="bg-card border border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      マイルストーン
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {selectedCurriculum.curriculum_data.milestones.map((milestone, index) => (
-                        <div key={index} className="bg-muted/50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Trophy className="w-4 h-4 text-yellow-400" />
-                            <span className="font-medium text-foreground">第{milestone.day}日目: {milestone.title}</span>
-                          </div>
-                          <p className="text-sm text-foreground/70">{milestone.description}</p>
-                        </div>
-                      ))}
-                    </div>
+
+            </div>
+          )}
+          {!selectedCurriculum && (
+            <div className="grid gap-4">
+              {curriculums.length === 0 ? (
+                <Card className="bg-card border">
+                  <CardContent className="p-6 text-center">
+                    <BookOpen className="w-12 h-12 mx-auto mb-4 text-foreground/50" />
+                    <p className="text-foreground/70">まだカリキュラムがありません</p>
+                    <p className="text-foreground/50 text-sm">「新規作成」タブから最初のカリキュラムを作成しましょう</p>
                   </CardContent>
                 </Card>
+              ) : (
+                curriculums.map((curriculum) => (
+                  <Card key={curriculum.curriculum_id} className="bg-card border">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-foreground text-lg">{curriculum.title}</CardTitle>
+                          <p className="text-foreground/70 text-sm mt-1">{curriculum.goal}</p>
+                        </div>
+                        <Badge variant="secondary" className="ml-2">
+                          {curriculum.duration_days}日間
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-foreground/70">
+                          作成日: {formatDate(curriculum.created_at)}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleViewCurriculum(curriculum)}
+                            variant="outline"
+                            size="sm"
+                            className="text-foreground border hover:bg-accent"
+                          >
+                            詳細を見る
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteCurriculum(curriculum.curriculum_id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-400 border-red-400/20 hover:bg-red-400/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
               )}
-            </>
+            </div>
           )}
         </TabsContent>
+
+
       </Tabs>
+
+
     </div>
   )
 }
