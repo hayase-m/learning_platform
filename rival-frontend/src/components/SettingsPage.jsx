@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge } from 'lucide-react'
+import { ArrowLeft, Settings, Volume2, Bell, Brain, Gauge, User } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import { Input } from '@/components/ui/input'
 
