@@ -124,7 +124,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
 
   if (!enabled) {
     return (
-      <Card className="bg-card border dark:border-white">
+      <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-card-foreground flex items-center gap-2">
             <CameraOff className="w-5 h-5" />
@@ -144,7 +144,7 @@ export default function FocusMonitor({ enabled, onFocusScoreUpdate }) {
   }
 
   return (
-    <Card className="bg-card border dark:border-white">
+    <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-card-foreground flex items-center gap-2">
           <Camera className="w-5 h-5" />

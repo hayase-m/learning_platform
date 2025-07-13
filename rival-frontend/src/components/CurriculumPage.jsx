@@ -178,7 +178,7 @@ export default function CurriculumPage({ user }) {
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-card border dark:border-white">
+        <TabsList className="grid w-full grid-cols-2 bg-card border">
           <TabsTrigger value="create" className="text-foreground data-[state=active]:bg-accent">
             <Plus className="w-4 h-4 mr-2" />
             新規作成
@@ -191,7 +191,7 @@ export default function CurriculumPage({ user }) {
 
         {/* カリキュラム作成タブ */}
         <TabsContent value="create" className="space-y-6">
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Target className="w-5 h-5" />
@@ -223,7 +223,7 @@ export default function CurriculumPage({ user }) {
                       variant="outline"
                       size="sm"
                       onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.max(prev.duration_days - 1, 1) }))}
-                      className="h-16 w-16 p-0 text-foreground border dark:border-white hover:bg-accent text-2xl"
+                      className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
                       disabled={formData.duration_days <= 1}
                     >
                       -
@@ -238,7 +238,7 @@ export default function CurriculumPage({ user }) {
                       variant="outline"
                       size="sm"
                       onClick={() => setFormData(prev => ({ ...prev, duration_days: Math.min(prev.duration_days + 1, 30) }))}
-                      className="h-16 w-16 p-0 text-foreground border dark:border-white hover:bg-accent text-2xl"
+                      className="h-16 w-16 p-0 text-foreground border hover:bg-accent text-2xl"
                       disabled={formData.duration_days >= 30}
                     >
                       +
@@ -289,7 +289,7 @@ export default function CurriculumPage({ user }) {
                 onClick={() => setSelectedCurriculum(null)}
                 variant="outline"
                 size="sm"
-                className="mb-4 border dark:border-white"
+                className="mb-4 border"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 一覧に戻る
@@ -299,8 +299,8 @@ export default function CurriculumPage({ user }) {
                 <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md border-green-400/30 mb-6">
                   <CardContent className="p-6 text-center">
                     <PartyPopper className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
-                    <h3 className="text-xl font-bold text-white mb-2">🎉 カリキュラム完了！</h3>
-                    <p className="text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">🎉 カリキュラム完了！</h3>
+                    <p className="text-gray-700 dark:text-white/80 mb-4">すべてのタスクを完了しました。お疲れさまでした！</p>
                     <Button
                       onClick={handleCompleteCurriculum}
                       className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-bold"
@@ -311,7 +311,7 @@ export default function CurriculumPage({ user }) {
                   </CardContent>
                 </Card>
               )}
-              <Card className="bg-card border dark:border-white mb-6">
+              <Card className="bg-card border mb-6">
                 <CardHeader>
                   <CardTitle className="text-foreground flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export default function CurriculumPage({ user }) {
                       onClick={() => handleDeleteCurriculum(selectedCurriculum.curriculum_id)}
                       variant="outline"
                       size="sm"
-                      className="text-red-400 border-red-400/20 dark:border-white hover:bg-red-400/10"
+                      className="text-red-400 border-red-400/20 hover:bg-red-400/10"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       削除
@@ -351,8 +351,31 @@ export default function CurriculumPage({ user }) {
                       </div>
                     </div>
                   )}
-                  <CurriculumRadialMap 
-                    curriculum={selectedCurriculum} 
+                  {selectedCurriculum.curriculum_data.milestones && selectedCurriculum.curriculum_data.milestones.length > 0 && (
+                    <Card className="bg-card border">
+                      <CardHeader>
+                        <CardTitle className="text-foreground flex items-center gap-2">
+                          <Trophy className="w-5 h-5" />
+                          マイルストーン
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {selectedCurriculum.curriculum_data.milestones.map((milestone, index) => (
+                            <div key={index} className="bg-muted/50 p-4 rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Trophy className="w-4 h-4 text-yellow-400" />
+                                <span className="font-medium text-foreground">第{milestone.day}日目: {milestone.title}</span>
+                              </div>
+                              <p className="text-sm text-foreground/70">{milestone.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  <CurriculumRadialMap
+                    curriculum={selectedCurriculum}
                     progress={selectedCurriculum.progress || []}
                     onProgressUpdate={async () => {
                       const updatedProgress = await fetchProgress(selectedCurriculum.curriculum_id)
@@ -367,7 +390,7 @@ export default function CurriculumPage({ user }) {
                   />
                 </CardContent>
               </Card>
-              <Card className="bg-card border dark:border-white mb-6">
+              <Card className="bg-card border mb-6">
                 <CardHeader>
                   <CardTitle className="text-foreground flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
@@ -486,35 +509,13 @@ export default function CurriculumPage({ user }) {
                 </CardContent>
               </Card>
 
-              {selectedCurriculum.curriculum_data.milestones && selectedCurriculum.curriculum_data.milestones.length > 0 && (
-                <Card className="bg-card border dark:border-white">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      マイルストーン
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {selectedCurriculum.curriculum_data.milestones.map((milestone, index) => (
-                        <div key={index} className="bg-muted/50 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Trophy className="w-4 h-4 text-yellow-400" />
-                            <span className="font-medium text-foreground">第{milestone.day}日目: {milestone.title}</span>
-                          </div>
-                          <p className="text-sm text-foreground/70">{milestone.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+
             </div>
           )}
           {!selectedCurriculum && (
             <div className="grid gap-4">
               {curriculums.length === 0 ? (
-                <Card className="bg-card border dark:border-white">
+                <Card className="bg-card border">
                   <CardContent className="p-6 text-center">
                     <BookOpen className="w-12 h-12 mx-auto mb-4 text-foreground/50" />
                     <p className="text-foreground/70">まだカリキュラムがありません</p>
@@ -523,7 +524,7 @@ export default function CurriculumPage({ user }) {
                 </Card>
               ) : (
                 curriculums.map((curriculum) => (
-                  <Card key={curriculum.curriculum_id} className="bg-card border dark:border-white">
+                  <Card key={curriculum.curriculum_id} className="bg-card border">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -545,7 +546,7 @@ export default function CurriculumPage({ user }) {
                             onClick={() => handleViewCurriculum(curriculum)}
                             variant="outline"
                             size="sm"
-                            className="text-foreground border dark:border-white hover:bg-accent"
+                            className="text-foreground border hover:bg-accent"
                           >
                             詳細を見る
                           </Button>
@@ -553,7 +554,7 @@ export default function CurriculumPage({ user }) {
                             onClick={() => handleDeleteCurriculum(curriculum.curriculum_id)}
                             variant="outline"
                             size="sm"
-                            className="text-red-400 border-red-400/20 dark:border-white hover:bg-red-400/10"
+                            className="text-red-400 border-red-400/20 hover:bg-red-400/10"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

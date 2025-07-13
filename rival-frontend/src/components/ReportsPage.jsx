@@ -5,11 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import ThemeToggle from './ThemeToggle'
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Target, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 
-export default function ReportsPage({ user }) {
+export default function ReportsPage({ user, onBack }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [reportData, setReportData] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -92,24 +90,11 @@ export default function ReportsPage({ user }) {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="text-foreground border hover:bg-accent"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          ダッシュボードに戻る
-        </Button>
-        <h1 className="text-2xl font-bold text-foreground">
-          学習レポート
-        </h1>
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5" />
@@ -133,7 +118,7 @@ export default function ReportsPage({ user }) {
 
         <div className="lg:col-span-3 space-y-6">
           {loading ? (
-            <Card className="bg-card border dark:border-white">
+            <Card className="bg-card border">
               <CardContent className="p-8 text-center">
                 <div className="text-foreground">レポートを読み込み中...</div>
               </CardContent>
@@ -141,7 +126,7 @@ export default function ReportsPage({ user }) {
           ) : reportData ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-card border dark:border-white">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <Clock className="w-8 h-8 text-blue-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -151,7 +136,7 @@ export default function ReportsPage({ user }) {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border dark:border-white">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <Target className="w-8 h-8 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -161,7 +146,7 @@ export default function ReportsPage({ user }) {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border dark:border-white">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <div className="text-2xl font-bold text-foreground">
                       {Math.round(reportData.avg_focus_score)}
@@ -170,7 +155,7 @@ export default function ReportsPage({ user }) {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border dark:border-white">
+                <Card className="bg-card border">
                   <CardContent className="p-4 text-center">
                     <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-foreground">
@@ -181,49 +166,7 @@ export default function ReportsPage({ user }) {
                 </Card>
               </div>
 
-              {/* Focus Score Chart */}
-              <Card className="bg-card border dark:border-white">
-                <CardHeader>
-                  <CardTitle className="text-card-foreground">時間帯別集中度推移</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={generateMockTimeSeriesData()}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis
-                          dataKey="time"
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                        />
-                        <YAxis
-                          stroke="#9CA3AF"
-                          fontSize={12}
-                          domain={[0, 100]}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#1F2937',
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#8B5CF6"
-                          strokeWidth={2}
-                          dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* AI Summary */}
-              <Card className="bg-card border dark:border-white">
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">AIライバルからの総評</CardTitle>
                 </CardHeader>
@@ -235,25 +178,12 @@ export default function ReportsPage({ user }) {
                   </div>
                 </CardContent>
               </Card>
-              revolution
-              {/* User Notes */}
-              <Card className="bg-card border dark:border-white">
+
+              <Card className="bg-card border">
                 <CardHeader>
                   <CardTitle className="text-card-foreground">コメント</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    value={userNotes}
-                    onChange={(e) => setUserNotes(e.target.value)}
-                    placeholder="今日の学習について振り返りや明日の目標を記入してください..."
-                    className="bg-card border text-card-foreground placeholder:text-muted-foreground min-h-24"
-                  />
-                  <Button
-                    onClick={saveUserNotes}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
-                    メモを保存
-                  </Button>
                   <div className="flex gap-2">
                     <Textarea
                       value={newComment}

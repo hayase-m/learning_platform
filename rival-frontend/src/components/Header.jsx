@@ -12,21 +12,21 @@ export default function Header({ user, isDrawerOpen, setIsDrawerOpen, location, 
   ]
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b dark:border-white h-16 flex items-center justify-between px-4">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b h-16 flex items-center justify-between px-4">
       <div className="flex items-center gap-4">
         <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
           <SheetTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="bg-card border dark:border-white"
+              className="bg-card border"
             >
               <Menu className="w-4 h-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 bg-card border-r dark:border-white">
+          <SheetContent side="left" className="w-64 bg-card border-r">
             <div className="flex flex-col h-full">
-              <div className="p-4 border-b dark:border-white">
+              <div className="p-4 border-b">
                 <h2 className="text-lg font-semibold text-foreground">AI Study Buddy</h2>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
@@ -49,7 +49,7 @@ export default function Header({ user, isDrawerOpen, setIsDrawerOpen, location, 
                   })}
                 </div>
               </nav>
-              <div className="p-4 border-t dark:border-white">
+              <div className="p-4 border-t">
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-red-400 hover:bg-red-400/10"

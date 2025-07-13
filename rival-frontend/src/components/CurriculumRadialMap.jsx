@@ -70,7 +70,7 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
 
   if (!curriculum) {
     return (
-      <Card className="bg-card border dark:border-white">
+      <Card className="bg-card border">
         <CardContent className="p-8 text-center">
           <p className="text-muted-foreground">カリキュラムを選択してください</p>
         </CardContent>
@@ -84,7 +84,7 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
 
   return (
     <div className="space-y-4">
-      <Card className="bg-card border dark:border-white">
+      <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

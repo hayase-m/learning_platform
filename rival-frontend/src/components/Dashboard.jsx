@@ -252,7 +252,7 @@ export default function Dashboard({ user }) {
         {/* Left Sidebar - Controls and Stats */}
         <div className="space-y-6">
           {/* Study Controls */}
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground flex items-center gap-2">
                 {cameraEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
@@ -272,7 +272,7 @@ export default function Dashboard({ user }) {
                       variant="outline"
                       size="sm"
                       onClick={() => setTargetCycles(Math.max(targetCycles - 1, 1))}
-                      className="h-15 w-15 p-0 text-card-foreground border dark:border-white hover:bg-accent text-2xl"
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
                       disabled={targetCycles <= 1}
                     >
                       -
@@ -286,7 +286,7 @@ export default function Dashboard({ user }) {
                       variant="outline"
                       size="sm"
                       onClick={() => setTargetCycles(Math.min(targetCycles + 1, 16))}
-                      className="h-15 w-15 p-0 text-card-foreground border dark:border-white hover:bg-accent text-2xl"
+                      className="h-15 w-15 p-0 text-card-foreground border hover:bg-accent text-2xl"
                       disabled={targetCycles >= 16}
                     >
                       +
@@ -315,7 +315,7 @@ export default function Dashboard({ user }) {
           </Card>
 
           {/* Pomodoro Timer */}
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground">
                 学習タイマー
@@ -343,7 +343,7 @@ export default function Dashboard({ user }) {
           </Card>
 
           {/* Focus Score */}
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground">集中スコア</CardTitle>
             </CardHeader>
@@ -364,7 +364,7 @@ export default function Dashboard({ user }) {
 
           {/* Selected Task */}
           {selectedTask && (
-            <Card className="bg-gradient-to-br from-primary/20 to-primary/10 border-primary/30 dark:border-white">
+            <Card className="bg-gradient-to-br from-primary/20 to-primary/10 border-primary/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-card-foreground flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
@@ -418,7 +418,7 @@ export default function Dashboard({ user }) {
                     }}
                     variant="outline"
                     size="sm"
-                    className="flex-1 border dark:border-white"
+                    className="flex-1 border"
                   >
                     クリア
                   </Button>
@@ -438,7 +438,7 @@ export default function Dashboard({ user }) {
           />
           
           {/* Real-time Stats */}
-          <Card className="bg-card border dark:border-white">
+          <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-card-foreground">リアルタイム統計</CardTitle>
             </CardHeader>
@@ -458,7 +458,7 @@ export default function Dashboard({ user }) {
         {/* Right Sidebar - Learning Activities */}
         <div>
           {selectedTask ? (
-            <Card className="bg-card border dark:border-white">
+            <Card className="bg-card border">
               <CardHeader>
                 <CardTitle className="text-card-foreground flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
@@ -549,9 +549,12 @@ export default function Dashboard({ user }) {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-card border dark:border-white">
+            <Card className="bg-card border">
               <CardContent className="p-6 text-center">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <BookOpen 
+                  className="w-12 h-12 mx-auto mb-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => navigate('/curriculum')}
+                />
                 <p className="text-muted-foreground">タスクが選択されていません</p>
                 <p className="text-muted-foreground/70 text-sm">カリキュラムからタスクを選択してください</p>
               </CardContent>

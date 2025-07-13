@@ -63,7 +63,7 @@ export default function LoginPage() {
           </p>
         </div>
         
-        <Card className="bg-card border dark:border-white">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-card-foreground">
               {isLogin ? 'ログイン' : '新規登録'}

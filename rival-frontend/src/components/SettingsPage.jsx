@@ -85,7 +85,7 @@ export default function SettingsPage({ user }) {
 
       <div className="max-w-2xl mx-auto space-y-6">
         {/* AI Personality Settings */}
-        <Card className="bg-card border dark:border-white">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Brain className="w-5 h-5" />
@@ -124,7 +124,7 @@ export default function SettingsPage({ user }) {
         </Card>
 
         {/* Notification Settings */}
-        <Card className="bg-card border dark:border-white">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Bell className="w-5 h-5" />
@@ -167,7 +167,7 @@ export default function SettingsPage({ user }) {
         </Card>
 
         {/* Focus Threshold Settings */}
-        <Card className="bg-card border dark:border-white">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Gauge className="w-5 h-5" />
@@ -210,7 +210,7 @@ export default function SettingsPage({ user }) {
         </Card>
 
         {/* Privacy Information */}
-        <Card className="bg-card border dark:border-white">
+        <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Settings className="w-5 h-5" />

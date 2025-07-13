@@ -99,7 +99,7 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
   }
 
   return (
-    <Card className="bg-card border dark:border-white h-full">
+    <Card className="bg-card border h-full">
       <CardHeader>
         <CardTitle className="text-card-foreground flex items-center gap-2">
           <Bot className="w-5 h-5" />
@@ -139,7 +139,7 @@ export default function AIFeedback({ focusScore, messages, onNewMessage }) {
         </div>
         
         {messages.length > 0 && (
-          <div className="mt-4 pt-4 border-t border dark:border-white">
+          <div className="mt-4 pt-4 border-t border">
             <div className="text-xs text-muted-foreground text-center">
               最新のメッセージが上部に表示されます
             </div>
