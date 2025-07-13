@@ -40,7 +40,8 @@ export default function LoginPage() {
       if (isLogin) {
         await api.createUser(auth, user.uid, user.email, 'ユーザー');
       } else {
-        await api.createUser(auth, user.uid, user.email, name);
+        const userName = name && name.trim() ? name.trim() : 'ユーザー';
+        await api.createUser(auth, user.uid, user.email, userName);
       }
 
       // ログイン/登録が成功すると、App.jsxのonAuthStateChangedが検知して自動的にダッシュボードに遷移する

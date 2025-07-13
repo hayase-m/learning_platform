@@ -39,7 +39,7 @@ def get_users():
 @user_bp.route('/users', methods=['POST'])
 # @token_required  # テスト用に一時的に無効化
 def create_user():
-    data = request.json
+    data = request.json or {}
     user_id = data.get('user_id')
     
     if not user_id:
@@ -51,7 +51,10 @@ def create_user():
         # 既に存在する場合は、その情報を返却する（エラーではない）
         return jsonify(existing_user.to_dict()), 200
     
-    name = data.get('name', 'ユーザー')
+    name = data.get('name')
+    if not name:
+        name = 'ユーザー'
+    
     email = data.get('email')
     if not email:
         return jsonify({'error': 'Email is required'}), 400
@@ -75,17 +78,35 @@ def get_user(user_id):
 @user_bp.route('/users/<string:user_id>', methods=['PUT'])
 # @token_required  # テスト用に一時的に無効化
 def update_user(user_id):
-    user = User.query.filter_by(user_id=user_id).first_or_404()
-    data = request.json
-    
-    user.name = data.get('name', user.name)
-    user.ai_personality = data.get('ai_personality', user.ai_personality)
-    user.notification_audio = data.get('notification_audio', user.notification_audio)
-    user.notification_desktop = data.get('notification_desktop', user.notification_desktop)
-    user.focus_threshold = data.get('focus_threshold', user.focus_threshold)
-    
-    db.session.commit()
-    return jsonify(user.to_dict())
+    try:
+        user = User.query.filter_by(user_id=user_id).first_or_404()
+        data = request.json or {}
+        
+        # nameフィールドの処理
+        if 'name' in data:
+            new_name = data['name']
+            if new_name and new_name.strip():
+                user.name = new_name.strip()
+            else:
+                user.name = 'ユーザー'
+        
+        # その他のフィールドの更新
+        if 'ai_personality' in data:
+            user.ai_personality = data['ai_personality']
+        if 'notification_audio' in data:
+            user.notification_audio = data['notification_audio']
+        if 'notification_desktop' in data:
+            user.notification_desktop = data['notification_desktop']
+        if 'focus_threshold' in data:
+            user.focus_threshold = data['focus_threshold']
+        
+        db.session.commit()
+        print(f'User updated successfully: {user.to_dict()}')
+        return jsonify(user.to_dict())
+    except Exception as e:
+        print(f'Error updating user: {e}')
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @user_bp.route('/users/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
@@ -292,6 +313,142 @@ def generate_ai_summary():
             summary += f"中断回数{interruption_count}回と少なく、とても集中できていました。素晴らしい一日でしたね！"
     
     return jsonify({'summary': summary})
+
+# Ranking endpoints
+@user_bp.route('/rankings/study-time/total', methods=['GET'])
+# @token_required  # テスト用に一時的に無効化
+def get_total_study_time_ranking():
+    from sqlalchemy import func
+    
+    try:
+        rankings = db.session.query(
+            User.user_id,
+            User.name,
+            func.coalesce(func.sum(DailyReport.total_study_time), 0).label('total_study_time')
+        ).outerjoin(
+            DailyReport, User.user_id == DailyReport.user_id
+        ).group_by(
+            User.user_id, User.name
+        ).order_by(
+            func.coalesce(func.sum(DailyReport.total_study_time), 0).desc()
+        ).limit(10).all()
+
+        result = []
+        for rank, (user_id, name, total_time) in enumerate(rankings, 1):
+            result.append({
+                'rank': rank,
+                'user_id': user_id,
+                'name': name,
+                'total_study_time': total_time or 0
+            })
+
+        print(f'Total study time ranking result: {result}')
+        return jsonify(result)
+    except Exception as e:
+        print(f'Error in get_total_study_time_ranking: {e}')
+        return jsonify([])
+
+@user_bp.route('/rankings/focus-time/total', methods=['GET'])
+# @token_required  # テスト用に一時的に無効化
+def get_total_focus_time_ranking():
+    from sqlalchemy import func
+    
+    try:
+        rankings = db.session.query(
+            User.user_id,
+            User.name,
+            func.coalesce(func.sum(DailyReport.total_focus_time), 0).label('total_focus_time')
+        ).outerjoin(
+            DailyReport, User.user_id == DailyReport.user_id
+        ).group_by(
+            User.user_id, User.name
+        ).order_by(
+            func.coalesce(func.sum(DailyReport.total_focus_time), 0).desc()
+        ).limit(10).all()
+
+        result = []
+        for rank, (user_id, name, total_time) in enumerate(rankings, 1):
+            result.append({
+                'rank': rank,
+                'user_id': user_id,
+                'name': name,
+                'total_focus_time': total_time or 0
+            })
+
+        return jsonify(result)
+    except Exception as e:
+        print(f'Error in get_total_focus_time_ranking: {e}')
+        return jsonify([])
+
+@user_bp.route('/rankings/study-time/today', methods=['GET'])
+# @token_required  # テスト用に一時的に無効化
+def get_today_study_time_ranking():
+    from datetime import date
+    
+    try:
+        today = date.today().strftime('%Y-%m-%d')
+        print(f'Looking for today\'s data: {today}')
+        
+        rankings = db.session.query(
+            User.user_id,
+            User.name,
+            DailyReport.total_study_time
+        ).join(
+            DailyReport, User.user_id == DailyReport.user_id
+        ).filter(
+            DailyReport.date == today
+        ).order_by(
+            DailyReport.total_study_time.desc()
+        ).limit(10).all()
+
+        result = []
+        for rank, (user_id, name, study_time) in enumerate(rankings, 1):
+            result.append({
+                'rank': rank,
+                'user_id': user_id,
+                'name': name,
+                'total_study_time': study_time or 0
+            })
+
+        print(f'Today study time ranking result: {result}')
+        return jsonify(result)
+    except Exception as e:
+        print(f'Error in get_today_study_time_ranking: {e}')
+        return jsonify([])
+
+@user_bp.route('/rankings/focus-time/today', methods=['GET'])
+# @token_required  # テスト用に一時的に無効化
+def get_today_focus_time_ranking():
+    from datetime import date
+    
+    try:
+        today = date.today().strftime('%Y-%m-%d')
+        
+        rankings = db.session.query(
+            User.user_id,
+            User.name,
+            DailyReport.total_focus_time
+        ).join(
+            DailyReport, User.user_id == DailyReport.user_id
+        ).filter(
+            DailyReport.date == today
+        ).order_by(
+            DailyReport.total_focus_time.desc()
+        ).limit(10).all()
+
+        result = []
+        for rank, (user_id, name, focus_time) in enumerate(rankings, 1):
+            result.append({
+                'rank': rank,
+                'user_id': user_id,
+                'name': name,
+                'total_focus_time': focus_time or 0
+            })
+
+        return jsonify(result)
+    except Exception as e:
+        print(f'Error in get_today_focus_time_ranking: {e}')
+        return jsonify([])
 
 # Comment endpoints
 @user_bp.route('/users/<string:user_id>/comments/<string:date>', methods=['GET'])

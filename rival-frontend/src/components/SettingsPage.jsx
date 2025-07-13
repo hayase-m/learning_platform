@@ -98,8 +98,22 @@ export default function SettingsPage({ user }) {
     try {
       console.log('Saving settings for userId:', user.uid);
       console.log('Settings to save:', settings);
-      const result = await api.updateUserSettings(auth, user.uid, settings);
+      
+      // 名前のバリデーション
+      const settingsToSave = {
+        ...settings,
+        name: settings.name && settings.name.trim() ? settings.name.trim() : 'ユーザー'
+      };
+      
+      const result = await api.updateUserSettings(auth, user.uid, settingsToSave);
       console.log('Settings saved successfully:', result);
+      
+      // 保存後に設定を更新
+      setSettings(prev => ({
+        ...prev,
+        name: result.name || 'ユーザー'
+      }));
+      
       alert('設定を保存しました！');
     } catch (error) {
       console.error('Error saving settings:', error);

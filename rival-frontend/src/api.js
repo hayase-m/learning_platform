@@ -160,8 +160,10 @@ export const api = {
     async createUser(auth, userId, email, name = null) {
         const headers = await getAuthHeader(auth);
         const body = { user_id: userId, email: email };
-        if (name) {
-            body.name = name;
+        if (name && name.trim()) {
+            body.name = name.trim();
+        } else {
+            body.name = 'ユーザー';
         }
         const response = await fetch(`${API_BASE_URL}/users`, {
             method: 'POST',
@@ -216,5 +218,61 @@ export const api = {
         });
         if (!response.ok) throw new Error('Failed to delete comment');
         return response.status === 204 ? {} : response.json();
+    },
+
+    async fetchTotalStudyTimeRanking(auth) {
+        const headers = await getAuthHeader(auth);
+        console.log('Fetching total study time ranking from:', `${API_BASE_URL}/rankings/study-time/total`);
+        const response = await fetch(`${API_BASE_URL}/rankings/study-time/total`, {
+            headers: headers
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`Failed to fetch total study time ranking: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Total study time ranking data:', data);
+        return data;
+    },
+
+    async fetchTotalFocusTimeRanking(auth) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/rankings/focus-time/total`, {
+            headers: headers
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`Failed to fetch total focus time ranking: ${response.status}`);
+        }
+        return response.json();
+    },
+
+    async fetchTodayStudyTimeRanking(auth) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/rankings/study-time/today`, {
+            headers: headers
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`Failed to fetch today study time ranking: ${response.status}`);
+        }
+        return response.json();
+    },
+
+    async fetchTodayFocusTimeRanking(auth) {
+        const headers = await getAuthHeader(auth);
+        const response = await fetch(`${API_BASE_URL}/rankings/focus-time/today`, {
+            headers: headers
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`Failed to fetch today focus time ranking: ${response.status}`);
+        }
+        return response.json();
     },
 };
