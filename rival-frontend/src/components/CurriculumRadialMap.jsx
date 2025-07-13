@@ -102,11 +102,12 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
         </CardHeader>
         <CardContent>
           <div className="flex justify-center">
-            <svg
-              width={width}
-              height={height}
-              className="text-foreground"
-            >
+            <div style={{ transform: 'scale(0.8)' }}>
+              <svg
+                width={width}
+                height={height}
+                className="text-foreground"
+              >
               {/* Orbit circles */}
               {orbits.map((orbit, i) => (
                 <circle
@@ -180,7 +181,8 @@ export default function CurriculumRadialMap({ curriculum, progress = [], onProgr
                   </text>
                 </g>
               ))}
-            </svg>
+              </svg>
+            </div>
           </div>
         </CardContent>
       </Card>
