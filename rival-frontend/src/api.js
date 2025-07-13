@@ -132,6 +132,11 @@ export const api = {
 
     async updateUserSettings(auth, userId, data) {
         const headers = await getAuthHeader(auth);
+        console.log('API call - updateUserSettings');
+        console.log('URL:', `${API_BASE_URL}/users/${userId}`);
+        console.log('Headers:', headers);
+        console.log('Data:', data);
+        
         const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
             method: 'PUT',
             headers: {
@@ -140,7 +145,15 @@ export const api = {
             },
             body: JSON.stringify(data),
         });
-        if (!response.ok) throw new Error('Failed to update user settings');
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Response error:', errorText);
+            throw new Error(`Failed to update user settings: ${response.status} - ${errorText}`);
+        }
         return response.json();
     },
 
