@@ -35,17 +35,83 @@ export default function CurriculumPage({ user }) {
   const [selectedCurriculum, setSelectedCurriculum] = useState(null)
   const [selectedDay, setSelectedDay] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [generationStatus, setGenerationStatus] = useState(null)
   const [formData, setFormData] = useState({
     goal: '',
     duration_days: 30
   })
 
   useEffect(() => {
-    // ユーザー情報が利用可能になってからカリキュラムを取得
     if (user && user.uid) {
       fetchCurriculums(user.uid);
+      checkGenerationStatus();
     }
-  }, [user]); // userオブジェクトの変更を監視
+    
+    const intervalId = setInterval(() => {
+      const status = localStorage.getItem('curriculumGenerationStatus');
+      if (status && user && user.uid) {
+        const parsedStatus = JSON.parse(status);
+        if (parsedStatus.isGenerating) {
+          if (!loading) {
+            setLoading(true);
+            setGenerationStatus(parsedStatus);
+          }
+          pollGenerationStatus(parsedStatus.userId, parsedStatus.startTime);
+        }
+      }
+    }, 3000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [user, loading]);
+
+  const checkGenerationStatus = () => {
+    const status = localStorage.getItem('curriculumGenerationStatus');
+    if (status) {
+      const parsedStatus = JSON.parse(status);
+      if (parsedStatus.isGenerating) {
+        setGenerationStatus(parsedStatus);
+        setLoading(true);
+        pollGenerationStatus(parsedStatus.userId, parsedStatus.startTime);
+      }
+    }
+  };
+
+  const pollGenerationStatus = async (userId, startTime) => {
+    const maxWaitTime = 5 * 60 * 1000;
+    const currentTime = Date.now();
+    
+    if (currentTime - startTime > maxWaitTime) {
+      clearGenerationStatus();
+      setLoading(false);
+      alert('カリキュラム生成がタイムアウトしました。もう一度お試しください。');
+      return;
+    }
+
+    try {
+      const data = await api.fetchCurriculums(auth, userId);
+      const newCurriculum = data.find(c => {
+        const createdTime = new Date(c.created_at).getTime();
+        return createdTime >= startTime - 1000;
+      });
+      
+      if (newCurriculum) {
+        setCurriculums(data);
+        clearGenerationStatus();
+        setLoading(false);
+        setActiveTab('list');
+        alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
+      }
+    } catch (error) {
+      console.error('Error polling generation status:', error);
+    }
+  };
+
+  const clearGenerationStatus = () => {
+    localStorage.removeItem('curriculumGenerationStatus');
+    setGenerationStatus(null);
+  };
 
   // カリキュラム一覧を取得
   const fetchCurriculums = async (userId) => {
@@ -85,17 +151,28 @@ export default function CurriculumPage({ user }) {
     if (!user || !user.uid) return;
 
     setLoading(true);
+    const startTime = Date.now();
+    
+    const status = {
+      isGenerating: true,
+      userId: user.uid,
+      startTime: startTime,
+      goal: formData.goal
+    };
+    localStorage.setItem('curriculumGenerationStatus', JSON.stringify(status));
+    setGenerationStatus(status);
 
     try {
       const newCurriculum = await api.createCurriculum(auth, user.uid, formData);
       setCurriculums(prev => [newCurriculum, ...prev]);
       setFormData({ goal: '', duration_days: 30 });
+      clearGenerationStatus();
+      setLoading(false);
       setActiveTab('list');
+      alert(`カリキュラム「${newCurriculum.title}」が正常に生成されました！`);
     } catch (error) {
       console.error('Error creating curriculum:', error);
-      alert(`カリキュラムの生成に失敗しました: ${error.message}`);
-    } finally {
-      setLoading(false);
+      pollGenerationStatus(user.uid, startTime);
     }
   }
 
@@ -276,6 +353,46 @@ export default function CurriculumPage({ user }) {
                     </>
                   )}
                 </Button>
+                
+                {loading && generationStatus && (
+                  <div className="mt-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                      <span className="text-blue-400 font-medium">生成中</span>
+                    </div>
+                    <p className="text-sm text-foreground/70 mb-2">
+                      目標: {generationStatus.goal}
+                    </p>
+                    <p className="text-xs text-foreground/50">
+                      AIがカリキュラムを作成しています。しばらくお待ちください...
+                    </p>
+                    <p className="text-xs text-foreground/40 mt-2">
+                      ※ 他のページに移動しても生成は継続されます
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        onClick={() => {
+                          clearGenerationStatus();
+                          setLoading(false);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-400 border-red-400/20 hover:bg-red-400/10"
+                      >
+                        キャンセル
+                      </Button>
+                      <Button
+                        onClick={() => user && user.uid && fetchCurriculums(user.uid)}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-400 border-blue-400/20 hover:bg-blue-400/10"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        状態確認
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </form>
             </CardContent>
           </Card>
