@@ -16,4 +16,5 @@ COPY rival-backend/ ./
 EXPOSE 8080
 
 # アプリケーションを起動
-CMD ["python3", "-m", "gunicorn", "-w", "2", "src.main:app", "--bind", "0.0.0.0:8080"]
+# CMD ["python3", "-m", "gunicorn", "-w", "2", "src.main:app", "--bind", "0.0.0.0:8080"]
+CMD ["python3", "-m", "gunicorn", "-w", "2", "--timeout", "180", "src.main:app", "--bind", "0.0.0.0:8080"]
