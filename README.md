@@ -1,6 +1,7 @@
 # AI Study Buddy "Rival"
 
 これは、あなたの学習をサポートするAI学習パートナー「Rival」のプロジェクトです。
+https://topaz.dev/projects/abacf6a4c3bf2cfd7425
 
 ## 概要
 
